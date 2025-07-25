@@ -69,12 +69,6 @@ clinica-victus/
 ├── README.md
 └── .env
 
-yaml
-Copiar
-Editar
-
----
-
 ##  Instalação e Execução
 
 ### 1. Clonar o projeto
@@ -86,9 +80,6 @@ PHP 7.4 ou superior
 
 Configurar backend/config/Conexao.php com os dados do seu banco
 
-php
-Copiar
-Editar
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'clinica_victus');
 define('DB_USER', 'root');
@@ -98,9 +89,6 @@ Rodar com Apache (XAMPP, Laragon ou outro)
 3. Frontend (React ou HTML/CSS)
 Navegue até a pasta frontend
 
-bash
-Copiar
-Editar
 npm install
 npm start
 4. Banco de Dados
@@ -132,9 +120,6 @@ Campos: email, senha
 
 Credenciais de Teste:
 
-text
-Copiar
-Editar
 Email: alex@victus.com
 Senha: 123456
  Banco de Dados

@@ -1,6 +1,8 @@
 # 🧠 Victus Academia
 
-Sistema web completo de apoio a clínicas, focado na jornada de transformação dos pacientes. Inclui login seguro, dashboard com lembretes e eventos, biblioteca de vídeos e PDFs, controle de progresso, plano alimentar, e gestão de perfil.
+Este projeto foi desenvolvido como parte de um desafio técnico para avaliar a capacidade de estruturar soluções completas e funcionais, tanto no backend quanto no frontend.
+
+O foco está na clareza da arquitetura, organização do código e aderência a diretrizes visuais e funcionais.
 
 ---
 

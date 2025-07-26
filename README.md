@@ -58,18 +58,19 @@ Este projeto foi desenvolvido para uma avaliação técnica e representa uma pla
 
 clinica-victus/
 ├── backend/
-│ ├── controllers/
-│ ├── models/
-│ ├── config/
-│ └── index.php
+│   ├── controllers/
+│   ├── models/
+│   ├── config/
+│   └── index.php
 ├── frontend/
-│ ├── pages/
-│ ├── components/
-│ └── App.js
+│   ├── pages/
+│   ├── components/
+│   └── App.js
 ├── database/
-│ └── script.sql
+│   └── script.sql
 ├── README.md
 └── .env
+
 
 ##  Instalação e Execução
 

@@ -78,6 +78,7 @@ clinica-victus/
 ```bash
 git clone https://github.com/teu-usuario/clinica-victus.git
 cd clinica-victus
+
 2. Backend (PHP)
 PHP 7.4 ou superior
 
@@ -94,8 +95,9 @@ Navegue até a pasta frontend
 
 npm install
 npm start
+
 4. Banco de Dados
-Importe o script SQL localizado em database/script.sql no phpMyAdmin
+Importe o script SQL localizado em database/clinica_victus.sql no phpMyAdmin
 
  Funcionalidades
  Login seguro com email e senha
@@ -126,29 +128,27 @@ Credenciais de Teste:
 Email: alex@victus.com
 Senha: 123456
  Banco de Dados
+
 Principais tabelas:
 
 usuarios
-
 biblioteca
-
 video
-
 progresso_video
-
 lembretes
-
 notificacoes
 
-Use o arquivo database/script.sql para importar as tabelas.
+Use o arquivo database/clinica_victus.sql para importar as tabelas.
 
  Rotas da API
  Autenticação
+
 Método	Rota	Descrição
 POST	/login	Login de usuário
 
  Biblioteca
 Método	Rota	Descrição
+
 GET	/biblioteca	Lista conteúdos disponíveis
 GET	/biblioteca/progresso/{id}	Lista com progresso do usuário
 POST	/biblioteca/adicionar	Adiciona novo conteúdo
@@ -179,7 +179,6 @@ Códigos de erro bem definidos:
  Autor
 Desenvolvido por Alex
  Email: alex@victus.com
- LinkedIn • Portfólio • GitHub
  Portifólio: alexdevcode.com
 
 Este projeto faz parte de uma avaliação técnica para a Victus. Foi estruturado de forma modular, segura e escalável, com foco em usabilidade e clareza de código.

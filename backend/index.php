@@ -1,8 +1,8 @@
 <?php
 // backend/index.php
 
-// --- CORS: permite requisições do frontend React ---
-header("Access-Control-Allow-Origin: *"); // Em produção, especifique o domínio do frontend
+// --- CORS: permite requisições do frontend React em localhost:3000 ---
+header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Credentials: true");

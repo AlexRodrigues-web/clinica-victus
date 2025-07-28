@@ -1,0 +1,43 @@
+.add-video-page {
+  padding: 1rem;
+}
+
+.add-video-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.add-video-form label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+}
+
+.add-video-form input,
+.add-video-form textarea {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.btn-submit {
+  background: #b4537c;
+  color: #fff;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.btn-submit:hover {
+  opacity: 0.9;
+}
+
+.erro {
+  color: red;
+  font-weight: bold;
+}

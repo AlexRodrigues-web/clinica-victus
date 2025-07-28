@@ -1,0 +1,56 @@
+# ---------------------------------------
+# Node.js / React dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# ---------------------------------------
+# PHP / Composer
+/vendor/
+
+# ---------------------------------------
+# Ambiente de desenvolvimento
+/.env
+/.env.local
+/.env.development.local
+/.env.test.local
+/.env.production.local
+
+# ---------------------------------------
+# Build / Produção
+/build
+/dist
+
+# ---------------------------------------
+# Coverage de testes
+/coverage
+
+# ---------------------------------------
+# IDEs e arquivos temporários
+.DS_Store
+.idea/
+.vscode/
+
+# ---------------------------------------
+# Logs e erros
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# ---------------------------------------
+# Backups e arquivos temporários
+*.bak
+*.tmp
+*.zip
+*.rar
+*.sqlite
+
+# ---------------------------------------
+# Banco de dados do XAMPP (opcional)
+*.sql
+
+# ---------------------------------------
+# SO específico
+Thumbs.db
+ehthumbs.db

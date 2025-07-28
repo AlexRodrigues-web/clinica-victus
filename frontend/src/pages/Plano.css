@@ -1,0 +1,144 @@
+.plano-wizard {
+  padding: 2rem;
+  text-align: center;
+  background-color: #fff;
+  font-family: 'Poppins', sans-serif;
+}
+
+.etapa h2 {
+  font-size: 1.6rem;
+  margin-bottom: 1.5rem;
+  color: #3b3b3b;
+}
+
+.opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.opcoes button {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 12px;
+  background-color: #d492a4; /* tom rosado suave */
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.opcoes button:hover {
+  transform: scale(1.05);
+  background-color: #c2778e;
+}
+
+.voltar {
+  margin-top: 1.5rem;
+  background-color: #f5f5f5 !important;
+  color: #5a5a5a;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 0.8rem 1.6rem;
+}
+
+.resultado {
+  background: #faf7f9;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  text-align: left;
+  max-width: 600px;
+  margin: auto;
+}
+
+.resultado h2 {
+  color: #b3005e;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.resultado p {
+  margin: 0.5rem 0;
+  color: #333;
+}
+
+.resultado ul {
+  padding-left: 1rem;
+  color: #555;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.resultado ul li {
+  margin-bottom: 0.5rem;
+  list-style-type: disc;
+}
+
+.ativar-btn {
+  display: inline-block;
+  background: #bf895f; /* tom dourado queimado */
+  color: white;
+  font-weight: bold;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  text-decoration: none;
+  margin-top: 1rem;
+  transition: background-color 0.2s;
+}
+
+.ativar-btn:hover {
+  background-color: #a56f4a;
+}
+.animate {
+  animation: fadeInUp 0.6s ease forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bloco-info {
+  background-color: #fff3f7;
+  border-left: 5px solid #d492a4;
+  padding: 1rem 1.5rem;
+  margin: 1rem auto;
+  text-align: left;
+  border-radius: 12px;
+  max-width: 500px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.bloco-info h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: #b3005e;
+}
+
+.bloco-info p,
+.bloco-info ul {
+  margin: 0;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.bloco-info ul {
+  padding-left: 1.2rem;
+  list-style: none;
+}
+
+.bloco-info ul li {
+  margin-bottom: 0.5rem;
+}
+
+.bloco-info.dicas {
+  background-color: #fef7e6;
+  border-left-color: #bf895f;
+}

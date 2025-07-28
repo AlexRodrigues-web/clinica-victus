@@ -1,0 +1,44 @@
+/* frontend/src/components/Header.css */
+
+.header-container {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background-color: #ffffff;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  z-index: 1000;
+}
+
+.header-icons {
+  display: flex;
+  gap: 16px;
+}
+
+.header-button {
+  position: relative;
+  background: none;
+  border: none;
+  color: #444;
+  cursor: pointer;
+  padding: 6px;
+  transition: color 0.2s;
+}
+.header-button:hover {
+  color: #000;
+}
+
+/* Badge de notificação */
+.badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 10px;
+  background-color: #e5c07b;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}

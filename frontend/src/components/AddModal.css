@@ -1,0 +1,97 @@
+/* AddModal.css - Estilo compatível com a identidade visual da Victus */
+
+.add-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+.add-modal-content {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.add-modal-title {
+  margin: 0 0 1.5rem;
+  font-size: 1.35rem;
+  text-align: center;
+  color: #004d40; /* tom sofisticado de verde escuro/azulado */
+  font-weight: 500;
+}
+
+.add-modal-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.add-modal-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+  background: #e0f2f1; /* tom claro e suave */
+  border: 1px solid #b2dfdb;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #004d40;
+  font-weight: 500;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.add-modal-btn:hover {
+  background: #b2dfdb;
+  transform: scale(1.02);
+}
+
+.add-modal-icon {
+  color: #00796b;
+}
+
+.add-modal-form {
+  margin-top: 1rem;
+}
+
+.add-modal-cancel {
+  margin-top: 1rem;
+  width: 100%;
+  background: none;
+  border: none;
+  color: #666;
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.95rem;
+  border-top: 1px solid #ddd;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.add-modal-cancel:hover {
+  color: #004d40;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

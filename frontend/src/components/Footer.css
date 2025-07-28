@@ -1,0 +1,116 @@
+/* frontend/src/components/Footer.css */
+
+:root {
+  --bg: #000000;
+  --text: #FFFFFF;
+  --subtext: #CCCCCC;
+  --accent: #ec4892;        /* cor de destaque */
+  --card-bg: #1E1E1E;       /* cor de blocos e accordion */
+  --border: #333333;        /* bordas e linhas */
+  --footer-bg: #FFFFFF;     /* fundo do footer */
+  --footer-border: #E0E0E0; /* borda superior do footer */
+  --footer-icon: #888888;   /* ícone inativo no footer */
+}
+
+
+.footer-container button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+.footer-container {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 60px;
+  background: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #e5e5e5;
+  box-shadow: 0 -1px 4px rgba(226, 113, 113, 0.05);
+  padding: 0 16px;
+  z-index: 1000;
+}
+
+/* --------- Itens fora do "+" --------- */
+/* Ícones + labels inativos */
+.footer-item {
+  flex: 1;
+  text-align: center;
+  color: #69696991;          /* cinza claro, “desbotado” */
+  font-size: 0.7rem;       /* ligeiramente menor */
+  padding-top: 6px;        /* ajusta vertical */
+  transition: color 0.2s ease;
+}
+.footer-item svg {
+  display: block;
+  margin: 0 auto;
+  width: 20px;             /* um pouco menores */
+  height: 20px;
+}
+.footer-item span {
+  display: block;
+  margin-top: 2px;
+  color: currentColor;
+}
+
+/* Estado ativo: rosa queimado */
+.footer-item.active {
+  color: #b4537c;          /* mantém rosa intenso */
+}
+
+/* --------- Botão central “+” --------- */
+.footer-plus-wrapper {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  top: -28px;              /* sobrepõe a borda */
+  background: #d74e90;     /* esconde a linha abaixo */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.plus-button {
+  background: #fda4af;     /* rosa mais suave, igual ao mockup */
+  color: #ffffff;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
+.plus-button:hover {
+  transform: scale(1.1);
+}
+
+/* --------- Avatar de perfil --------- */
+/* Miniatura inativa “dessaturada” */
+.profile-img {
+  width: 12px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto;
+  filter: grayscale(100%) brightness(0.8);
+  opacity: 0.6;
+  transition: filter 0.2s, opacity 0.2s;
+}
+/* Avatar ativo volta à cor normal */
+.footer-item.active .profile-img {
+  filter: none;
+  opacity: 1;
+}

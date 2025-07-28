@@ -1,0 +1,330 @@
+/* Video.css */
+
+/* Variáveis de cor */
+:root {
+  --bg: #000000;
+  --text: #FFFFFF;
+  --subtext: #CCCCCC;
+  --accent: #ec4892;        /* cor de destaque */
+  --card-bg: #1E1E1E;       /* cor de blocos e accordion */
+  --border: #333333;        /* bordas e linhas */
+  --footer-bg: #FFFFFF;     /* fundo do footer */
+  --footer-border: #E0E0E0; /* borda superior do footer */
+  --footer-icon: #888888;   /* ícone inativo no footer */
+}
+
+/* Container geral */
+.video-page {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 60px; /* espaço para footer */
+}
+
+/* Header */
+.video-header {
+  position: relative;
+  display: flex;
+  justify-content: center; /* mantém o conteúdo centralizado */
+  align-items: flex-start;
+  padding: 16px 0 0;       /* só padding‑top para empurrar o header-body pra baixo */
+  background: var(--bg);
+  height: 88px;
+}
+
+/* Botão “voltar” */
+/* Video.css */
+
+/* Header */
+.video-header {
+  position: relative;
+  display: flex;
+  justify-content: center;  /* mantém o conteúdo centralizado */
+  align-items: flex-start;
+  padding-top: 16px;        /* empurra o body pra baixo */
+  height: 88px;
+  background: var(--bg);
+}
+
+/* Botão de voltar – só a seta, canto esquerdo */
+.header-back-btn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: inline-flex;     /* só o tamanho do conteúdo */
+  align-items: center;
+  justify-content: center;
+  width: auto;              /* nunca expande */
+  padding: 4px;             /* área de clique mínima */
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text);
+  cursor: pointer;
+  z-index: 10;
+}
+
+/* Mantém o header-body centrado */
+.header-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+
+/* título do curso */
+.header-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+}
+
+/* subtítulo (nome da aula) */
+.header-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--subtext);
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* layout da barra de progresso + percent */
+.header-progress-row {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;     /* espaço entre subtítulo e progresso */
+  gap: 8px;
+}
+
+/* track branca da barra */
+.header-progress {
+  width: 200px;        /* ajuste conforme necessário */
+  height: 4px;
+  background: #FFFFFF;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/* fill da barra */
+.header-bar {
+  width: 0;            /* injeta via inline style */
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+/* percent ao lado */
+.header-percent {
+  font-size: 0.8rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* Player & overlay */
+.video-player {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  background: #111111;
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: rgba(0,0,0,0.4);
+}
+
+.video-player iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+/* Fallback */
+.embed-fallback {
+  text-align: center;
+  padding: 0.5rem;
+  color: var(--subtext);
+}
+
+.embed-fallback a {
+  color: var(--accent);
+}
+
+/* Meta & ações */
+.video-info {
+  padding: 1rem;
+}
+
+.video-meta {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.video-meta h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.video-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 1rem;
+}
+
+.video-actions .action-icon {
+  font-size: 1.2rem;
+  color: var(--footer-icon);
+}
+
+.video-actions .action-icon.completed {
+  color: var(--accent);
+}
+
+.video-description {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--subtext);
+}
+
+/* Próxima aula */
+.next-lesson-pill {
+  background: var(--card-bg);
+  margin: 0.5rem 1rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+}
+
+.next-lesson-pill span {
+  color: var(--subtext);
+  font-size: 0.8rem;
+}
+
+.next-lesson-pill button {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.next-lesson-pill button svg {
+  color: var(--accent);
+  font-size: 1.2rem;
+}
+
+/* Accordion de módulos */
+.accordion-item {
+  margin: 0 1rem 1rem;
+}
+
+.accordion-header {
+  width: 100%;
+  background: var(--card-bg);
+  color: var(--text);
+  border: none;
+  border-radius: 6px;
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.accordion-body {
+  margin-top: 0.5rem;
+  padding-left: 1rem;
+}
+
+/* Botões de aula */
+.lesson-button {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--subtext);
+  cursor: pointer;
+}
+
+.lesson-button svg {
+  margin-right: 0.5rem;
+  font-size: 1rem;
+}
+
+.lesson-button.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.lesson-button.locked svg {
+  color: var(--footer-icon);
+}
+
+.lesson-button:not(.locked) {
+  color: var(--text);
+}
+
+.lesson-button:not(.locked) svg {
+  color: var(--accent);
+}
+
+/* Footer fixo */
+.video-footer {
+  position: fixed;
+  bottom: 0; left: 0;
+  width: 100%;
+  display: flex;
+  background: var(--footer-bg);
+  border-top: 1px solid var(--footer-border);
+  padding: 0.5rem 0;
+  z-index: 1000;
+}
+
+.video-footer .footer-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--footer-icon);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.video-footer .footer-item svg {
+  margin-bottom: 0.2rem;
+  font-size: 1.4rem;
+}
+
+.video-footer .footer-item.active,
+.video-footer .footer-item:hover {
+  color: var(--accent);
+}

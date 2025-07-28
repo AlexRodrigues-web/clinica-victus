@@ -1,0 +1,54 @@
+/* AddFormUpload.css */
+
+.upload-form {
+  max-width: 420px;
+  margin: 40px auto;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.upload-title {
+  text-align: center;
+  font-size: 1.5rem;
+  color: #213547;
+  margin-bottom: 1.5rem;
+}
+
+.upload-input,
+.upload-textarea,
+.upload-select,
+.upload-file {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  transition: border 0.2s;
+}
+
+.upload-input:focus,
+.upload-textarea:focus,
+.upload-select:focus {
+  border-color: #4b9ecf;
+  outline: none;
+}
+
+.upload-button {
+  width: 100%;
+  padding: 0.75rem;
+  background: #0091ad;
+  color: white;
+  border: none;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.upload-button:hover {
+  background: #007b95;
+}

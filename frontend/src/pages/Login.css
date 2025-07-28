@@ -1,0 +1,100 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom right, #fff6f6, #f7f1f3);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.login-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+
+.login-form h2 {
+  font-size: 1.4rem;
+  margin-bottom: 2rem;
+  color: #111;
+}
+
+.login-form label {
+  display: block;
+  text-align: left;
+  font-weight: 500;
+  color: #333;
+  margin-top: 1rem;
+  margin-bottom: 0.3rem;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: #fdfdfd;
+  font-size: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper .toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 1.1rem;
+  opacity: 0.6;
+}
+
+button {
+  width: 100%;
+  padding: 0.9rem;
+  background: #d7a9a2;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  margin-top: 1.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #c9928a;
+}
+
+.erro {
+  color: red;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.recuperar {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.recuperar span {
+  color: #c67373;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.termos {
+  margin-top: 2rem;
+  font-size: 0.8rem;
+  color: #777;
+  line-height: 1.4;
+}

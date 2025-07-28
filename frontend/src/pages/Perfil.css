@@ -1,0 +1,166 @@
+/* Perfil.css */
+
+/* Container principal */
+.perfil-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  padding-bottom: 80px;            /* evita sobrepor pelo footer */
+  background-color: #FFF5F2;       /* tom suave rosado-claro */
+  font-family: 'Poppins', sans-serif;
+  color: #3A3A3A;                  /* texto primário */
+}
+
+/* Cabeçalho */
+.perfil-header h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+  color: #2F2F2F;                  /* título mais escuro */
+}
+
+.perfil-header p {
+  font-size: 0.95rem;
+  color: #6E6E6E;                  /* legenda mais suave */
+  margin-bottom: 1.5rem;
+}
+
+/* Card de foto */
+.perfil-card {
+  background-color: #FDE7E4;       /* card rosado leve */
+  border-radius: 20px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.perfil-foto img {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #D98C7E;      /* contorno rosé */
+}
+
+/* Botão editar */
+.botao-edit {
+  background-color: transparent;
+  border: 1px solid #D98C7E;
+  color: #D98C7E;
+  padding: 0.5rem 1rem;
+  margin-top: 0.5rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.botao-edit:hover {
+  background-color: #D98C7E;
+  color: #FFF;
+}
+
+/* Grid de seções */
+.perfil-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* Cards internos */
+.card {
+  background-color: #FFF;
+  border-radius: 18px;
+  padding: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+  color: #3A3A3A;
+}
+.card p {
+  font-size: 0.95rem;
+  margin: 0.25rem 0;
+  color: #4A4A4A;
+}
+
+/* Botão secundário */
+.botao-secundario {
+  background-color: #F5E2DF;       /* leve tom rosado */
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: #8C6A60;                  /* texto rosé escuro */
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background 0.2s, transform 0.1s;
+}
+.botao-secundario:hover {
+  background-color: #E8C5C0;
+  transform: translateY(-2px);
+}
+
+/* Área de logout */
+.logout-area {
+  margin-top: 2rem;
+  text-align: center;
+}
+.botao-sair {
+  background-color: #D98C7E;
+  color: #FFF;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: background-color 0.3s, transform 0.1s;
+}
+.botao-sair:hover {
+  background-color: #B97067;
+  transform: translateY(-2px);
+}
+
+/* Inputs e selects */
+input,
+select {
+  width: 100%;
+  padding: 0.65rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid #D98C7E;
+  border-radius: 12px;
+  background-color: #FFF;
+  font-size: 0.95rem;
+  font-family: 'Poppins', sans-serif;
+  color: #333;
+  transition: box-shadow 0.2s;
+}
+input:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(217,140,126,0.3);
+}
+
+/* Botão salvar */
+.botao-salvar {
+  margin-top: 1.5rem;
+  background-color: #D98C7E;
+  border: none;
+  color: #fff;
+  padding: 0.7rem 2rem;
+  border-radius: 22px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.3s, transform 0.1s;
+}
+.botao-salvar:hover {
+  background-color: #B97067;
+  transform: translateY(-2px);
+}

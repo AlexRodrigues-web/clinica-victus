@@ -1,0 +1,9 @@
+# Garante que o cabeçalho Authorization seja repassado ao PHP
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>
+
+# Alternativa para SetEnvIf
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1

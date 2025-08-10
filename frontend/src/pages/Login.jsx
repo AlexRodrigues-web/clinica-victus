@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { AuthContext } from '../contexts/AuthContext';
 import './Login.css';
 
 export default function Login() {
@@ -10,6 +11,7 @@ export default function Login() {
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext); // ✅ Usa o contexto
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -20,12 +22,18 @@ export default function Login() {
       const response = await api.post('login', { email, senha });
       const { usuario, token } = response.data;
 
-      // salvar no contexto (implementar se necessário)
-      localStorage.setItem('token', token);
+      if (!usuario || !token) {
+        throw new Error('Resposta inválida do servidor');
+      }
+
+      // ✅ Atualiza o contexto corretamente
+      login(usuario, token);
+
+      // ✅ Redireciona após login
       navigate('/dashboard');
     } catch (err) {
       console.error('Erro no login:', err);
-      setErro(err.response?.data?.erro || 'Erro inesperado');
+      setErro(err.response?.data?.erro || err.message || 'Erro inesperado');
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,6 @@
 <?php
 // backend/routes/perfil.php
 
-// --- CORS & JSON headers ---
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS");
@@ -12,11 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// --- includes ---
 require_once __DIR__ . '/../config/conexao.php';
 require_once __DIR__ . '/../helpers/validar_token.php';
 
-// --- autenticação via token ---
 $usuario_id = validar_token();
 if (!$usuario_id) {
     http_response_code(401);
@@ -35,40 +32,29 @@ $pdo = conectar();
 if ($method === 'GET' && $acao === null) {
     $sql = "
         SELECT
-            u.nome,
-            u.genero,
-            u.data_nascimento,
-            u.telefone,
-            u.endereco,
-            u.email,
-            u.dt_registro,
-            u.foto_perfil,
-            JSON_OBJECT(
-                'nome', p.nome,
-                'objetivo', p.objetivo,
-                'duracao', p.duracao,
-                'progresso', u.plano_progresso
-            ) AS plano,
-            JSON_OBJECT(
-                'notificacoes', u.notificacoes,
-                'idioma', u.idioma
-            ) AS config
-        FROM usuarios u
-        LEFT JOIN planos p ON p.id = u.plano_id
-        WHERE u.id = ?
+            id,
+            nome,
+            email,
+            nivel,
+            dt_registro,
+            foto_perfil
+        FROM usuarios
+        WHERE id = ?
         LIMIT 1
     ";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$usuario_id]);
     $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+
     if (!$usuario) {
         http_response_code(404);
         echo json_encode(['erro' => 'Usuário não encontrado']);
         exit;
     }
-    $usuario['plano']  = json_decode($usuario['plano'],  true);
-    $usuario['config'] = json_decode($usuario['config'], true);
-    echo json_encode($usuario);
+
+    echo json_encode([
+        'usuario' => $usuario
+    ]);
     exit;
 }
 
@@ -82,11 +68,8 @@ if ($method === 'PUT' && $acao === null) {
         echo json_encode(['erro' => 'JSON inválido']);
         exit;
     }
-    $permitidos = [
-        'nome','genero','data_nascimento',
-        'telefone','endereco','email',
-        'notificacoes','idioma'
-    ];
+
+    $permitidos = ['nome', 'email'];
     $campos = $valores = [];
     foreach ($permitidos as $f) {
         if (array_key_exists($f, $input)) {
@@ -94,15 +77,18 @@ if ($method === 'PUT' && $acao === null) {
             $valores[] = $input[$f];
         }
     }
+
     if (empty($campos)) {
         http_response_code(400);
         echo json_encode(['erro' => 'Nenhum campo permitido enviado']);
         exit;
     }
+
     $valores[] = $usuario_id;
     $sql = "UPDATE usuarios SET " . implode(', ', $campos) . " WHERE id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute($valores);
+
     echo json_encode(['sucesso' => true]);
     exit;
 }
@@ -119,25 +105,26 @@ if ($method === 'POST' && $acao === 'foto') {
         echo json_encode(['erro' => 'Erro ao receber a imagem']);
         exit;
     }
+
     $ext = pathinfo($_FILES['foto_perfil']['name'], PATHINFO_EXTENSION);
     $novoNome      = "perfil_{$usuario_id}_" . time() . ".$ext";
     $pastaDestino  = __DIR__ . "/../uploads/fotos/";
     if (!file_exists($pastaDestino)) mkdir($pastaDestino, 0777, true);
     $caminhoFisico = $pastaDestino . $novoNome;
     $urlRelativa   = "uploads/fotos/{$novoNome}";
+
     if (!move_uploaded_file($_FILES['foto_perfil']['tmp_name'], $caminhoFisico)) {
         http_response_code(500);
         echo json_encode(['erro' => 'Falha ao mover arquivo']);
         exit;
     }
+
     $stmt = $pdo->prepare("UPDATE usuarios SET foto_perfil = ? WHERE id = ?");
     $stmt->execute([$urlRelativa, $usuario_id]);
+
     echo json_encode(['foto_perfil' => $urlRelativa]);
     exit;
 }
 
-// --------------------------
-// Rota não encontrada
-// --------------------------
 http_response_code(404);
 echo json_encode(['erro' => 'Rota não encontrada']);

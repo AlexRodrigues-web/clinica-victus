@@ -1,26 +1,42 @@
 <?php
-// backend/helpers/validar_token.php
-// extrai o token do header Authorization e retorna o $usuario_id ou false
+require_once __DIR__ . '/jwt.php';
 
 function validar_token() {
-    // espera um header assim: Authorization: Bearer SEU_TOKEN_AQUI
-    $h = getallheaders();
-    if (empty($h['Authorization'])) {
+    $headers = function_exists('getallheaders') ? getallheaders() : [];
+
+    // 🔎 Log dos headers recebidos
+    error_log("validar_token - HEADERS recebidos: " . print_r($headers, true));
+
+    // Compatibilidade com servidores que retornam 'authorization' em minúsculo
+    $authHeader = '';
+    if (!empty($headers['Authorization'])) {
+        $authHeader = $headers['Authorization'];
+    } elseif (!empty($headers['authorization'])) {
+        $authHeader = $headers['authorization'];
+    }
+
+    if (empty($authHeader)) {
+        error_log("validar_token - Token ausente no header");
         return false;
     }
-    $bearer = trim(str_ireplace('Bearer', '', $h['Authorization']));
-    // aqui você faz a validação real do JWT (ou sessão)...
-    // por enquanto, se quiser testar, devolva um ID fixo:
-    // return 1;
-    // se já tiver sua rotina de verificação de token JWT, utilize-a:
-    try {
-        // Exemplo com Firebase JWT ou outra lib:
-        // $decoded = JWT::decode($bearer, 'SUA_CHAVE_SECRETA', ['HS256']);
-        // return $decoded->sub;
-        // —————————————
-        // Para teste rápido, só faça:
-        return 1; // id do usuário de teste
-    } catch (Exception $e) {
+
+    // Remove prefixo Bearer
+    $token = trim(preg_replace('/Bearer\s+/i', '', $authHeader));
+
+    if (empty($token)) {
+        error_log("validar_token - Header Authorization encontrado, mas token vazio");
         return false;
     }
+
+    // Valida JWT
+    $payload = validarJWT($token);
+    if ($payload === false) {
+        error_log("validar_token - Token inválido ou expirado");
+        return false;
+    }
+
+    // Log de sucesso
+    error_log("validar_token - Token válido para usuário ID: {$payload['id']}");
+
+    return $payload['id'] ?? false;
 }

@@ -14,7 +14,7 @@ class LoginController {
     public function autenticar($dados) {
         error_log("LoginController::autenticar iniciado");
 
-        if (!isset($dados['email']) || !isset($dados['senha'])) {
+        if (empty($dados['email']) || empty($dados['senha'])) {
             error_log("LoginController::dados incompletos");
             return ['erro' => 'Email e senha são obrigatórios'];
         }
@@ -34,16 +34,21 @@ class LoginController {
             return ['erro' => 'Senha incorreta'];
         }
 
-        // Remover a senha do retorno
-        unset($usuario['senha']);
+        // ✅ Filtra campos necessários
+        $usuarioFiltrado = [
+            'id'    => $usuario['id'],
+            'nome'  => $usuario['nome'],
+            'email' => $usuario['email'],
+            'nivel' => $usuario['nivel'] ?? 'usuario' // fallback
+        ];
 
         // Gerar JWT
-        $token = gerarJWT($usuario);
-        error_log("LoginController::JWT gerado com sucesso para usuário ID: {$usuario['id']}");
+        $token = gerarJWT($usuarioFiltrado);
+        error_log("LoginController::JWT gerado com sucesso para usuário ID: {$usuarioFiltrado['id']}");
 
         return [
             'mensagem' => 'Login bem-sucedido',
-            'usuario' => $usuario,
+            'usuario' => $usuarioFiltrado,
             'token' => $token
         ];
     }

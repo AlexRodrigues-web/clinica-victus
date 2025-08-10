@@ -39,19 +39,28 @@ class BibliotecaController {
         }
     }
 
- 
     public function adicionar(string $tipo = null) {
         error_log("BibliotecaController::adicionar iniciado, tipo={$tipo}");
-        $input = json_decode(file_get_contents('php://input'), true) ?: [];
+        $raw = file_get_contents('php://input');
+        error_log("BibliotecaController::raw input: " . $raw);
 
-        // se vier tipo na URL e não no body, preenche
+        if (function_exists('getallheaders')) {
+            error_log("BibliotecaController::headers: " . json_encode(getallheaders()));
+        }
+
+        $input = json_decode($raw, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("BibliotecaController::json_decode error: " . json_last_error_msg());
+            $input = [];
+        }
+        error_log("BibliotecaController::decoded input: " . json_encode($input));
+
         if ($tipo && empty($input['tipo'])) {
             $input['tipo'] = $tipo;
         }
 
-        // valida campos obrigatórios
         foreach (['titulo','url_arquivo','tipo'] as $campo) {
-            if (empty($input[$campo])) {
+            if (empty($input[$campo]) || !is_string($input[$campo]) || trim($input[$campo]) === '') {
                 http_response_code(400);
                 echo json_encode(['erro' => "Campo '{$campo}' é obrigatório"]);
                 return;
@@ -59,11 +68,11 @@ class BibliotecaController {
         }
 
         $data = [
-            'titulo'      => $input['titulo'],
-            'descricao'   => $input['descricao']   ?? '',
-            'url_arquivo' => $input['url_arquivo'],
-            'imagem_capa' => $input['imagem_capa'] ?? '',
-            'tipo'        => $input['tipo'],
+            'titulo'      => trim($input['titulo']),
+            'descricao'   => isset($input['descricao']) ? trim($input['descricao']) : '',
+            'url_video'   => trim($input['url_arquivo']),
+            'imagem_capa' => isset($input['imagem_capa']) ? trim($input['imagem_capa']) : '',
+            'tipo'        => trim($input['tipo']),
         ];
 
         try {
@@ -79,7 +88,6 @@ class BibliotecaController {
         }
     }
 
-    
     public function adicionarArquivo() {
         error_log("BibliotecaController::adicionarArquivo iniciado");
 
@@ -89,10 +97,11 @@ class BibliotecaController {
             return;
         }
 
-        $titulo = $_POST['titulo']   ?? '';
-        $tipo   = $_POST['tipo']     ?? '';
+        $titulo = isset($_POST['titulo']) ? trim($_POST['titulo']) : '';
+        $tipo   = isset($_POST['tipo']) ? trim($_POST['tipo']) : '';
+        $descricao = isset($_POST['descricao']) ? trim($_POST['descricao']) : '';
 
-        if (empty($titulo) || empty($tipo)) {
+        if ($titulo === '' || $tipo === '') {
             http_response_code(400);
             echo json_encode(['erro' => 'Título e tipo são obrigatórios']);
             return;
@@ -125,7 +134,12 @@ class BibliotecaController {
         $absPath = __DIR__ . '/../../public' . $relPath;
 
         if (!is_dir(dirname($absPath))) {
-            mkdir(dirname($absPath), 0777, true);
+            if (!mkdir(dirname($absPath), 0777, true) && !is_dir(dirname($absPath))) {
+                error_log("BibliotecaController::falha ao criar diretório: " . dirname($absPath));
+                http_response_code(500);
+                echo json_encode(['erro' => 'Erro interno ao preparar armazenamento']);
+                return;
+            }
         }
 
         if (!move_uploaded_file($arquivo['tmp_name'], $absPath)) {
@@ -136,8 +150,8 @@ class BibliotecaController {
 
         $data = [
             'titulo'      => $titulo,
-            'descricao'   => $_POST['descricao'] ?? '',
-            'url_arquivo' => $relPath,
+            'descricao'   => $descricao,
+            'url_video'   => $relPath,
             'imagem_capa' => '',
             'tipo'        => $tipo,
         ];
@@ -149,6 +163,24 @@ class BibliotecaController {
             error_log("BibliotecaController::erro upload salvar - " . $e->getMessage());
             http_response_code(500);
             echo json_encode(['erro' => 'Erro ao salvar registro']);
+        }
+    }
+
+    /**
+     * Novo método: Detalhes com módulos, aulas, materiais, progresso
+     */
+    public function detalhesComModulos($bibliotecaId, $usuarioId) {
+        error_log("BibliotecaController::detalhesComModulos iniciado. biblioteca={$bibliotecaId}, usuario={$usuarioId}");
+        try {
+            $detalhes = $this->model->getDetalhesComModulos($bibliotecaId, $usuarioId);
+            echo json_encode([
+                'sucesso' => true,
+                'dados'   => $detalhes
+            ]);
+        } catch (Exception $e) {
+            error_log("BibliotecaController::erro detalhesComModulos - " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['erro' => 'Erro ao buscar detalhes da biblioteca']);
         }
     }
 }

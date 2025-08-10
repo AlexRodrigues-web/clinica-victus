@@ -1,5 +1,8 @@
 /* Video.css */
 
+/* Desliga DOM da tela de vídeo quando estou em Aulas */
+body.on-aulas .video-page { display: none !important; }
+
 /* Variáveis de cor */
 :root {
   --bg: #000000;
@@ -327,4 +330,186 @@
 .video-footer .footer-item.active,
 .video-footer .footer-item:hover {
   color: var(--accent);
+}
+
+/* ===== Notas (Anotacoes.jsx) — responsivo ===== */
+.notes-container { padding-top: 0; }
+
+.notes-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.notes-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+  flex-wrap: wrap;
+}
+
+.notes-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.notes-search {
+  background: #1f1f1f;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+  min-width: 180px;
+}
+
+.notes-btn, .notes-primary {
+  min-height: 40px;                /* alvo de toque >= 40px */
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: #1f1f1f;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notes-btn.danger {
+  background: #2b0000;
+  border-color: #551111;
+}
+
+.notes-primary {
+  background: #d98e2d;
+  border: none;
+  color: #000;
+  font-weight: 700;
+}
+
+.notes-editor {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  margin: 6px 0 16px;
+}
+
+.notes-textarea {
+  width: 100%;
+  background: #1f1f1f;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+  min-height: 90px;
+  resize: vertical;
+  box-sizing: border-box;   /* inclui padding/borda no 100% */
+  width: 100%;
+  max-width: 100%;
+}
+
+.notes-editor-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;             /* respiro acima do footer fixo */
+}
+
+.notes-empty { opacity: .8; }
+
+.notes-card {
+  background: #1e1e1e;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.notes-card.pinned {
+  border-color: #d98e2d;
+}
+
+.notes-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.notes-date { color: rgba(255,255,255,.6); }
+
+.notes-pin-badge {
+  font-size: 12px;
+  color: #d98e2d;
+  background: #2a1e0c;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.notes-icon-row {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.notes-icon-btn {
+  width: 40px; height: 40px;       /* alvo de toque */
+  background: none;
+  border: 1px solid #333;
+  border-radius: 10px;
+  color: #bbb;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.notes-text {
+  white-space: pre-wrap;
+  font-size: 14px;
+  color: rgba(255,255,255,.9);
+}
+
+/* Tablets */
+@media (max-width: 900px) {
+  .notes-toolbar { gap: 10px; }
+  .notes-actions { gap: 6px; }
+  .notes-search { min-width: 160px; }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .notes-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .notes-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .notes-actions .notes-btn,
+  .notes-actions .notes-search {
+    flex: 1 1 auto;
+  }
+  .notes-editor {
+    grid-template-columns: 1fr;    /* textarea em cima, botões abaixo */
+  }
+  .notes-editor-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  .notes-icon-row { gap: 6px; }
+  .notes-icon-btn { width: 44px; height: 44px; } /* ainda melhor pra dedo */
 }

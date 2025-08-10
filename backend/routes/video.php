@@ -9,19 +9,22 @@ $method  = $_SERVER['REQUEST_METHOD'];
 
 error_log("video.php rota recebida: " . implode('/', $param) . " - método: $method");
 
-if ($method === 'GET' && count($param) === 2) {
-    // Ex.: rota=video/5/1 → bibliotecaId=5, usuarioId=1
-    $bibliotecaId = (int) $param[0];
-    $usuarioId    = (int) $param[1];
-    $controller->detalhes($bibliotecaId, $usuarioId);
+if ($method === 'GET') {
+    if (count($param) === 3 && strtolower($param[0]) === 'detalhes') {
+        $bibliotecaId = (int) $param[1];
+        $usuarioId    = (int) $param[2];
+        $controller->detalhes($bibliotecaId, $usuarioId);
+    } elseif (count($param) === 2) {
+        $bibliotecaId = (int) $param[0];
+        $usuarioId    = (int) $param[1];
+        $controller->detalhes($bibliotecaId, $usuarioId);
+    } else {
+        http_response_code(400);
+        echo json_encode(['erro' => 'Parâmetros inválidos para rota video']);
+    }
 
-} elseif ($method !== 'GET') {
-    // Método não permitido
-    http_response_code(405);
-    echo json_encode(['erro' => 'Método não permitido']);
 
 } else {
-    // Rota inválida
-    http_response_code(404);
-    echo json_encode(['erro' => 'Rota não encontrada']);
+    http_response_code(405);
+    echo json_encode(['erro' => 'Método não permitido']);
 }

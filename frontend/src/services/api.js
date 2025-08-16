@@ -109,3 +109,91 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+/* =========================================================
+   PREFERÊNCIAS — vídeos (com backend + fallback local)
+   ========================================================= */
+const VIDEO_PREFS_KEY = (bib, uid) => `cv:video:prefs:${bib}:${uid}`;
+
+export const DEFAULT_VIDEO_PREFS = Object.freeze({
+  favorite: false,
+  liked: false,
+  completed: false,
+});
+
+// Fallback local
+function getLocalPrefs(bibliotecaId, usuarioId, fallback = DEFAULT_VIDEO_PREFS) {
+  try {
+    const raw = localStorage.getItem(VIDEO_PREFS_KEY(bibliotecaId, usuarioId));
+    if (!raw) return { ...fallback };
+    const parsed = JSON.parse(raw);
+    return { ...fallback, ...parsed };
+  } catch {
+    return { ...fallback };
+  }
+}
+
+function setLocalPrefs(bibliotecaId, usuarioId, prefs) {
+  const data = { ...DEFAULT_VIDEO_PREFS, ...(prefs || {}) };
+  try {
+    localStorage.setItem(VIDEO_PREFS_KEY(bibliotecaId, usuarioId), JSON.stringify(data));
+  } catch {}
+  return data;
+}
+
+/**
+ * Lê preferências do BACKEND, com fallback ao localStorage.
+ * @param {number|string} bibliotecaId
+ * @param {number|string} usuarioId
+ * @param {object} fallback
+ */
+export async function getPrefs(bibliotecaId, usuarioId, fallback = DEFAULT_VIDEO_PREFS) {
+  try {
+    const res = await api.get(`prefs/${Number(bibliotecaId)}/${Number(usuarioId)}`);
+    if (res?.data?.sucesso && res.data.prefs) {
+      const merged = { ...fallback, ...res.data.prefs };
+      try {
+        localStorage.setItem(VIDEO_PREFS_KEY(bibliotecaId, usuarioId), JSON.stringify(merged));
+      } catch {}
+      return merged;
+    }
+    throw new Error('Resposta inválida do servidor');
+  } catch {
+    return getLocalPrefs(bibliotecaId, usuarioId, fallback);
+  }
+}
+
+/**
+ * Grava preferências no BACKEND e sincroniza localStorage (fallback local se falhar).
+ * @param {number|string} bibliotecaId
+ * @param {number|string} usuarioId
+ * @param {{favorite?:boolean|number, liked?:boolean|number, completed?:boolean|number}} prefs
+ */
+export async function setPrefs(bibliotecaId, usuarioId, prefs) {
+  const payload = {
+    biblioteca_id: Number(bibliotecaId),
+    usuario_id: Number(usuarioId),
+    favorite: prefs?.favorite ? 1 : 0,
+    liked: prefs?.liked ? 1 : 0,
+    completed: prefs?.completed ? 1 : 0,
+  };
+
+  try {
+    const res = await api.post('prefs/set', payload);
+    const saved = res?.data?.prefs ?? payload;
+    try {
+      localStorage.setItem(VIDEO_PREFS_KEY(bibliotecaId, usuarioId), JSON.stringify(saved));
+    } catch {}
+    return saved;
+  } catch (e) {
+    setLocalPrefs(bibliotecaId, usuarioId, payload);
+    throw e;
+  }
+}
+
+/* opcional: helper para atualizar parcialmente
+export async function updatePrefs(bibliotecaId, usuarioId, patch) {
+  const cur = await getPrefs(bibliotecaId, usuarioId);
+  return setPrefs(bibliotecaId, usuarioId, { ...cur, ...(patch || {}) });
+}
+*/

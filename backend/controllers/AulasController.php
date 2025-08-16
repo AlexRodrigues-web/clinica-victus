@@ -71,9 +71,40 @@ class AulasController {
         return $out;
     }
 
+    /** Agrega progresso do curso a partir das aulas retornadas pelo model (sem novas queries). */
+    private function aggregateCursoProgresso(array $modulosDedup): array {
+        $totalPlayable = 0;
+        $concluidas    = 0;
+        $emAndamento   = 0;
+
+        foreach ($modulosDedup as $aulas) {
+            foreach ($aulas as $a) {
+                if (!$this->hasPlayer($a)) continue;
+                $totalPlayable++;
+                $pct = (float)($a['progresso'] ?? 0);
+                $doneFlag = (int)($a['concluido'] ?? 0);
+
+                if ($doneFlag === 1 || $pct >= 100) {
+                    $concluidas++;
+                } elseif ($pct > 0) {
+                    $emAndamento++;
+                }
+            }
+        }
+
+        $percentual = $totalPlayable > 0 ? round(($concluidas / $totalPlayable) * 100) : 0;
+
+        return [
+            'total_playable' => $totalPlayable,
+            'concluidas'     => $concluidas,
+            'em_andamento'   => $emAndamento,
+            'percentual'     => $percentual,
+        ];
+    }
+
     /**
      * GET /aulas/tem/{bibliotecaId}
-     * Agora verifica se há AO MENOS UMA aula com player (embed_url ou url_video) no curso resolvido.
+     * Verifica se há AO MENOS UMA aula com player no curso resolvido.
      */
     public function tem($bibliotecaId) {
         $bibliotecaId = (int)$bibliotecaId;
@@ -111,6 +142,7 @@ class AulasController {
         ], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
     }
 
+    /** GET /aulas/detalhes/{bibliotecaId}/{usuarioId} */
     public function detalhes($bibliotecaId, $usuarioId) {
         $bibliotecaId = (int)$bibliotecaId;
         $usuarioId    = (int)$usuarioId;
@@ -141,7 +173,7 @@ class AulasController {
             return;
         }
 
-        // 2) Módulos + aulas
+        // 2) Módulos + aulas (o MODEL já aplica o desbloqueio sequencial entre aulas tocáveis)
         try {
             $modulos = $this->model->getModulosEAulas($cursoId, $usuarioId);
             $countMod = count($modulos);
@@ -161,18 +193,16 @@ class AulasController {
             error_log("[AulasController::detalhes] DEDUP aplicado: aulas {$countAulas} -> {$countAulasDedup}");
         }
 
-        // 3) Calcular lista 'all' e 'playable'
+        // 3) Monta flat e filtra tocáveis
         $all = [];
         foreach ($modulosDedup as $lista) foreach ($lista as $a) $all[] = $a;
 
         $playable = array_values(array_filter($all, function($a) {
-            $embed = trim((string)($a['embed_url'] ?? ''));
-            $url   = trim((string)($a['url_video'] ?? ''));
-            return $embed !== '' || $url !== '';
+            return $this->hasPlayer($a);
         }));
         $countPlayable = count($playable);
 
-        // 4) Escolher current_aula_id (preferindo apenas aulas tocáveis)
+        // 4) Escolher current_aula_id (sempre entre tocáveis e respeitando bloqueios)
         $currentId = null;
 
         try {
@@ -204,12 +234,19 @@ class AulasController {
             $currentId = (int)$playable[0]['id'];
         }
 
+        // 5) Agregar progresso do curso (fallback seguro)
+        $agg = $this->aggregateCursoProgresso($modulosDedup);
+        if (!isset($bib['progresso']) || $bib['progresso'] === null || $bib['progresso'] === '') {
+            $bib['progresso'] = $agg['percentual'];
+        }
+
         $resp = [
             'sucesso'         => true,
             'biblioteca'      => $bib,
-            'modulos'         => $modulosDedup,     // mantém todas (inclusive sem player), frontend decide exibir/alertar
-            'current_aula_id' => $currentId,        // sempre apontando para uma aula tocável (quando houver)
+            'modulos'         => $modulosDedup,     // mantém todas (inclusive sem player)
+            'current_aula_id' => $currentId,        // aponta para aula tocável desbloqueada quando houver
             'curso_resolvido' => $cursoId,
+            'curso_progress'  => $agg,              // info extra opcional
             'source'          => 'AulasController'
         ];
 
@@ -234,6 +271,7 @@ class AulasController {
         echo json_encode($resp, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
     }
 
+    /** POST /aulas/progresso  { aula_id, usuario_id, percentual } */
     public function atualizarProgresso() {
         $raw = file_get_contents('php://input');
         error_log("[AulasController::atualizarProgresso] RAW = ".$raw);

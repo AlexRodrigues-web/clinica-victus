@@ -1,7 +1,7 @@
 // src/pages/Aulas.jsx
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useCallback, useContext } from 'react';
-import api from '../services/api';
+import api, { getPrefs, setPrefs, DEFAULT_VIDEO_PREFS } from '../services/api';
 import VideoLessons from '../components/VideoLessons';
 import { FaPlayCircle, FaRegCommentDots, FaRegStickyNote, FaRegFileAlt } from 'react-icons/fa';
 import { IoIosArrowBack } from 'react-icons/io';
@@ -84,6 +84,16 @@ export default function Aulas() {
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  // === NOVO: preferências do vídeo (curso) ===
+  const [prefs, setPrefsState] = useState(DEFAULT_VIDEO_PREFS);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+
+  // aplica classe no <body> para esconder a tela de vídeo (conforme seu CSS)
+  useEffect(() => {
+    document.body.classList.add('on-aulas');
+    return () => document.body.classList.remove('on-aulas');
+  }, []);
+
   function chooseInitialAula(all = []) {
     const inProgress = all.find(a => !a.bloqueado && Number(a.progresso || 0) > 0 && Number(a.progresso) < 100);
     if (inProgress) return inProgress;
@@ -92,29 +102,30 @@ export default function Aulas() {
     return all[0] || null;
   }
 
-  const fetchDetalhes = useCallback(async () => {
-    if (!Number.isFinite(cursoId) || cursoId <= 0) {
-      setLoading(false);
-      setDebug(d => ({ ...d, axiosOk: false, axiosError: 'bibliotecaId inválido' }));
-      return;
-    }
-    setLoading(true);
-
+  // função bruta para buscar os detalhes e devolver os dados
+  const loadDetalhesRaw = useCallback(async () => {
     const path = `aulas/detalhes/${cursoId}/${finalUsuarioId}`;
     const params = { ...(debugMode ? { debug: 1 } : {}), ...(fromVideoId ? { from: fromVideoId } : {}) };
     const fullUrl = `${api.defaults.baseURL || ''}${path}${Object.keys(params).length ? `?${new URLSearchParams(params).toString()}` : ''}`;
     setDebug(d => ({ ...d, pathCalled: path, fullUrl }));
 
-    try {
-      const r = await api.get(path, { params });
-      setDebug(d => ({ ...d, axiosOk: true, axiosStatus: r.status, payload: r.data }));
-      if (!r.data?.sucesso) throw new Error('Falha ao carregar aulas');
+    const r = await api.get(path, { params });
+    setDebug(d => ({ ...d, axiosOk: true, axiosStatus: r.status, payload: r.data }));
+    if (!r.data?.sucesso) throw new Error('Falha ao carregar aulas');
+    return r.data;
+  }, [cursoId, finalUsuarioId, fromVideoId, debugMode]);
 
-      const { biblioteca: bib, modulos: mods, current_aula_id } = r.data;
+  // carrega e seta estado (uso normal)
+  const fetchDetalhes = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await loadDetalhesRaw();
+      const { biblioteca: bib, modulos: mods, current_aula_id } = data;
+
       setBiblioteca(bib);
       setModulos(mods || {});
-      const all = Object.values(mods || {}).flat();
 
+      const all = Object.values(mods || {}).flat();
       if (all.length === 0) {
         setCurrentAula(null);
         setExpanded({});
@@ -134,25 +145,72 @@ export default function Aulas() {
         axiosError: err?.message || 'erro',
         payload: err?.response?.data ?? null
       }));
+      console.error('[Aulas] Erro ao carregar detalhes:', err); // ERRO LOG
     } finally {
       setLoading(false);
     }
-  }, [cursoId, finalUsuarioId, fromVideoId, debugMode]);
+  }, [loadDetalhesRaw]);
 
-  useEffect(() => { fetchDetalhes(); }, [fetchDetalhes]);
-
-  // ao trocar de aula: parar player e limpar iframes antigos deste container
   useEffect(() => {
-    setIsPlaying(false);
+    if (Number.isFinite(cursoId) && cursoId > 0) fetchDetalhes();
+    else setLoading(false);
+  }, [fetchDetalhes, cursoId]);
+
+  // ao trocar de aula: APENAS cleanup; NÃO force isPlaying=false aqui (impedia autoplay do próximo)
+  useEffect(() => {
     return () => {
       // cleanup do player desta página
       forceStopAllIframes('.vl-player iframe');
     };
   }, [currentAula?.id]);
 
-  // ao sair desta página (unmount): mata qq iframe que tenha restado
-  useEffect(() => () => forceStopAllIframes('iframe'), []);
+  // === NOVO: carregar preferências do backend (com fallback local) ===
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      try {
+        const p = await getPrefs(cursoId, Number(finalUsuarioId));
+        if (!cancel) {
+          setPrefsState({
+            favorite: !!p.favorite,
+            liked: !!p.liked,
+            completed: !!p.completed,
+          });
+        }
+      } catch (e) {
+        console.error('[Aulas] Erro ao carregar preferências:', e); // ERRO LOG
+        if (!cancel) setPrefsState(DEFAULT_VIDEO_PREFS);
+      }
+    })();
+    return () => { cancel = true; };
+  }, [cursoId, finalUsuarioId]);
 
+  // === NOVO: togglers de preferências (otimistas) ===
+  const persistPrefs = async (next) => {
+    try {
+      setSavingPrefs(true);
+      await setPrefs(cursoId, Number(finalUsuarioId), next);
+    } catch (e) {
+      console.error('[Aulas] Erro ao salvar preferências:', e); // ERRO LOG
+      // mantém otimista para UX
+    } finally {
+           setSavingPrefs(false);
+    }
+  };
+
+  const toggleFavorite = async () => {
+    const next = { ...prefs, favorite: !prefs.favorite };
+    setPrefsState(next);
+    await persistPrefs(next);
+  };
+
+  const toggleLiked = async () => {
+    const next = { ...prefs, liked: !prefs.liked };
+    setPrefsState(next);
+    await persistPrefs(next);
+  };
+
+  // “Concluir”
   const handleComplete = async () => {
     if (!currentAula?.id) return;
     try {
@@ -160,7 +218,44 @@ export default function Aulas() {
       await api.post('aulas/progresso', body, { params: { ...(debugMode ? { debug: 1 } : {}) } });
       await fetchDetalhes();
     } catch (e) {
+      console.error('[Aulas] Erro ao marcar aula como concluída:', e); // ERRO LOG
       alert('Não foi possível marcar como concluída.');
+    }
+  };
+
+  // “Próxima aula” — marca atual como 100%, recarrega e já abre a próxima com autoplay
+  const handleNext = async (nextHint) => {
+    try {
+      if (currentAula?.id) {
+        const body = { aula_id: currentAula.id, usuario_id: Number(finalUsuarioId), percentual: 100 };
+        await api.post('aulas/progresso', body, { params: { ...(debugMode ? { debug: 1 } : {}) } });
+      }
+
+      const data = await loadDetalhesRaw();
+      const mods = data.modulos || {};
+      const flat = Object.values(mods).flat();
+
+      // escolhe a “target”
+      let target = null;
+      if (nextHint) target = flat.find(a => Number(a.id) === Number(nextHint.id)) || null;
+      if (!target && currentAula) {
+        const idx = flat.findIndex(a => Number(a.id) === Number(currentAula.id));
+        if (idx >= 0 && idx + 1 < flat.length) target = flat[idx + 1];
+      }
+      if (!target) target = flat.find(a => !a.bloqueado) || flat[0] || null;
+
+      setBiblioteca(data.biblioteca);
+      setModulos(mods);
+      setCurrentAula(target || null);
+
+      const modName = target ? (target.modulo || target.modulo_nome) : null;
+      if (modName) setExpanded({ [modName]: true });
+
+      // AUTOPLAY do próximo
+      if (target) setIsPlaying(true);
+    } catch (e) {
+      console.error('[Aulas] Erro ao avançar para a próxima aula:', e); // ERRO LOG
+      alert('Não foi possível avançar para a próxima aula.');
     }
   };
 
@@ -186,9 +281,10 @@ export default function Aulas() {
   axiosOk: debug.axiosOk, axiosStatus: debug.axiosStatus, axiosError: debug.axiosError,
   currentAula: currentAula ? {
     id: currentAula.id, titulo: currentAula.titulo,
-    url_video: currentAula.url_video, embed_url: currentAula.embed_url
+    url_video: currentAula.url_video, embed_url: currentAula.embed_url,
+    bloqueado: currentAula.bloqueado, progresso: currentAula.progresso
   } : null,
-  rawAulaUrl, embedUrl
+  rawAulaUrl, embedUrl, isPlaying
 }, null, 2)}
     </pre>
   ) : null);
@@ -202,22 +298,29 @@ export default function Aulas() {
     );
   }
 
+  const progressPct = Math.max(0, Math.min(100, Math.round(biblioteca.progresso || 0)));
+
   return (
     <div className="vl-container">
       <DebugBar />
 
       {/* HEADER */}
       <header className="vl-header">
-        <button className="vl-btn-back" onClick={() => navigate('/biblioteca')} aria-label="Voltar">
+        <button className="vl-btn-back" onClick={() => navigate('/biblioteca')} aria-label="Voltar" type="button">
           <IoIosArrowBack size={24} />
         </button>
         <div className="vl-course-info">
-          <h2 className="vl-course-title">{biblioteca.titulo}</h2>
+          {/* título da AULA quando existir, senão o título do CURSO */}
+          <h2 className="vl-course-title">{currentAula?.titulo || biblioteca.titulo}</h2>
+          {/* subtítulo opcional: nome do curso quando há aula */}
+          {currentAula?.titulo && (
+            <div className="vl-course-subtitle">{biblioteca.titulo}</div>
+          )}
           <div className="vl-progress-row">
             <div className="vl-progress-bar">
-              <div className="vl-progress-fill" style={{ width: `${Math.round(biblioteca.progresso || 0)}%` }} />
+              <div className="vl-progress-fill" style={{ width: `${progressPct}%` }} />
             </div>
-            <span className="vl-progress-text">{Math.round(biblioteca.progresso || 0)}%</span>
+            <span className="vl-progress-text">{progressPct}%</span>
           </div>
         </div>
       </header>
@@ -239,7 +342,7 @@ export default function Aulas() {
         {currentAula && !isBlocked && !isPlaying && thumb && (
           <>
             <img className="vl-thumb" src={thumb} alt="" />
-            <button className="vl-btn-play" onClick={() => setIsPlaying(true)} aria-label="Reproduzir aula">
+            <button className="vl-btn-play" onClick={() => setIsPlaying(true)} aria-label="Reproduzir aula" type="button">
               <FaPlayCircle />
             </button>
           </>
@@ -266,6 +369,7 @@ export default function Aulas() {
         modulos={modulos}
         currentAula={currentAula}
         setCurrentAula={(a) => {
+          // seleção manual: para o player; (no Next a gente liga autoplay)
           setCurrentAula(a);
           setIsPlaying(false);
           const modName = a?.modulo || a?.modulo_nome;
@@ -275,6 +379,13 @@ export default function Aulas() {
         toggleModule={(m) => setExpanded((p) => ({ ...p, [m]: !p[m] }))}
         showHeader={false}
         onComplete={handleComplete}
+        onNext={handleNext}   // faz o fluxo “próxima aula” completo
+
+        // === NOVO: passa prefs e handlers p/ os botões (estrela/coração)
+        prefs={prefs}
+        onToggleFavorite={toggleFavorite}
+        onToggleLiked={toggleLiked}
+        savingPrefs={savingPrefs}
       />
 
       {/* Footer (tabs) */}
@@ -284,26 +395,36 @@ export default function Aulas() {
           onClick={() =>
             navigate(
               `${aulasPath}${
-                debugMode || fromVideoId ? `?${[
-                  debugMode ? 'debug=1' : null,
-                  fromVideoId ? `from=${encodeURIComponent(fromVideoId)}` : null
-                ].filter(Boolean).join('&')}` : ''
+                debugMode || fromVideoId ? `?${
+                  [debugMode ? 'debug=1' : null, fromVideoId ? `from=${encodeURIComponent(fromVideoId)}` : null]
+                    .filter(Boolean).join('&')
+                }` : ''
               }`
             )
           }
+          aria-current="page"
         >
           <FaPlayCircle size={20} />
           <div className="footer-label">Aulas</div>
         </div>
-        <div className="footer-item" onClick={() => navigate(`${commentsBase}/comentarios`)}>
+        <div
+          className="footer-item"
+          onClick={() => navigate(`${commentsBase}/comentarios`)}
+        >
           <FaRegCommentDots size={20} />
           <div className="footer-label">Comentários</div>
         </div>
-        <div className="footer-item" onClick={() => navigate(`${commentsBase}/anotacoes`)}>
+        <div
+          className="footer-item"
+          onClick={() => navigate(`${commentsBase}/anotacoes`)}
+        >
           <FaRegStickyNote size={20} />
           <div className="footer-label">Anotações</div>
         </div>
-        <div className="footer-item" onClick={() => navigate(`${commentsBase}/materiais`)}>
+        <div
+          className="footer-item"
+          onClick={() => navigate(`${commentsBase}/materiais`)}
+        >
           <FaRegFileAlt size={20} />
           <div className="footer-label">Materiais</div>
         </div>

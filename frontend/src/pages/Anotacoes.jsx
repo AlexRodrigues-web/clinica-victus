@@ -20,7 +20,40 @@ import {
 import { IoIosArrowBack } from 'react-icons/io';
 import './Video.css';
 
-const LS_KEY = (bib, uid) => `cv:anotacoes:${bib}:${uid}`;
+// duas chaves: por usuário e pública
+const LS_KEY_USER   = (bib, uid) => `cv:anotacoes:${bib}:${uid}`;
+const LS_KEY_PUBLIC = (bib)      => `cv:anotacoes:${bib}`;
+
+const readLS = (k) => {
+  try { const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : []; }
+  catch { return []; }
+};
+const writeLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+// merge + dedup + ordenação (pinned primeiro, depois por data desc)
+function normalizeNotes(list) {
+  const out = [];
+  const seen = new Set();
+  for (const n of (list || [])) {
+    const id = (n.id ?? '').toString().trim();
+    const sig = id ? `id:${id}` : `t:${(n.texto||'').trim()}|d:${n.criado_em||''}`;
+    if (!seen.has(sig)) {
+      seen.add(sig);
+      out.push({
+        id,
+        texto: String(n.texto || ''),
+        criado_em: n.criado_em || new Date().toISOString(),
+        pinned: !!n.pinned,
+      });
+    }
+  }
+  out.sort((a,b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return new Date(b.criado_em) - new Date(a.criado_em);
+  });
+  return out;
+}
 
 export default function Anotacoes() {
   const { bibliotecaId, usuarioId } = useParams();
@@ -34,8 +67,14 @@ export default function Anotacoes() {
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const fileInputRef = useRef(null);
 
+  const fileInputRef = useRef(null);
+  const textareaRef  = useRef(null);
+
+  const LS_USER   = useMemo(() => LS_KEY_USER(bibliotecaId, finalUsuarioId), [bibliotecaId, finalUsuarioId]);
+  const LS_PUBLIC = useMemo(() => LS_KEY_PUBLIC(bibliotecaId),               [bibliotecaId]);
+
+  // título/curso
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -45,53 +84,66 @@ export default function Anotacoes() {
         setCurso(r.data?.biblioteca || { titulo: 'Curso' });
       } catch {
         if (alive) setCurso({ titulo: 'Curso' });
-      } finally {
-        if (alive) setLoading(false);
-      }
+      } finally { if (alive) setLoading(false); }
     })();
     return () => { alive = false; };
   }, [bibliotecaId, finalUsuarioId]);
 
+  // carrega anotações de AMBAS as chaves
   useEffect(() => {
-    const raw = localStorage.getItem(LS_KEY(bibliotecaId, finalUsuarioId));
-    setNotes(raw ? JSON.parse(raw) : []);
-  }, [bibliotecaId, finalUsuarioId]);
+    const localUser   = readLS(LS_USER);
+    const localPublic = readLS(LS_PUBLIC);
+    setNotes(normalizeNotes([...localUser, ...localPublic]));
+  }, [LS_USER, LS_PUBLIC]);
 
-  const saveLocal = (list) => {
-    setNotes(list);
-    localStorage.setItem(LS_KEY(bibliotecaId, finalUsuarioId), JSON.stringify(list));
+  // textarea auto-grow
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = '0px';
+    el.style.height = Math.min(el.scrollHeight, 240) + 'px';
+  }, [texto]);
+
+  const persistBoth = (list) => {
+    const norm = normalizeNotes(list);
+    setNotes(norm);
+    writeLS(LS_USER, norm);
+    writeLS(LS_PUBLIC, norm);
   };
 
   const addNote = () => {
     const msg = texto.trim();
     if (!msg) return;
-    const novo = { id: Date.now(), texto: msg, criado_em: new Date().toISOString(), pinned: false };
-    saveLocal([novo, ...notes]);
+    const novo = { id: `local-${Date.now()}`, texto: msg, criado_em: new Date().toISOString(), pinned: false };
+    persistBoth([novo, ...notes]);
     setTexto('');
+    textareaRef.current?.focus();
   };
 
   const removeNote = (id) => {
     if (!window.confirm('Deseja apagar esta anotação?')) return;
-    saveLocal(notes.filter(n => n.id !== id));
+    persistBoth(notes.filter(n => n.id !== id));
     if (editId === id) { setEditId(null); setTexto(''); }
   };
 
   const removeAll = () => {
-    if (!window.confirm('Apagar TODAS as anotações desta aula/curso?')) return;
-    saveLocal([]); setEditId(null); setTexto('');
-  };
-
-  const startEdit = (n) => { setEditId(n.id); setTexto(n.texto); };
-  const cancelEdit = () => { setEditId(null); setTexto(''); };
-  const confirmEdit = () => {
-    const msg = texto.trim(); if (!msg) return;
-    saveLocal(notes.map(n => (n.id === editId ? { ...n, texto: msg } : n)));
+    if (!window.confirm('Apagar TODAS as anotações deste curso?')) return;
+    persistBoth([]);
     setEditId(null); setTexto('');
   };
 
-  const togglePin = (id) => saveLocal(notes.map(n => (n.id === id ? { ...n, pinned: !n.pinned } : n)));
+  const startEdit = (n) => { setEditId(n.id); setTexto(n.texto); textareaRef.current?.focus(); };
+  const cancelEdit = () => { setEditId(null); setTexto(''); };
+  const confirmEdit = () => {
+    const msg = texto.trim(); if (!msg) return;
+    persistBoth(notes.map(n => (n.id === editId ? { ...n, texto: msg } : n)));
+    setEditId(null); setTexto('');
+  };
+
+  const togglePin = (id) => persistBoth(notes.map(n => (n.id === id ? { ...n, pinned: !n.pinned } : n)));
+
   const copyText = async (txt) => {
-    try { await navigator.clipboard.writeText(txt); alert('Copiado para a área de transferência.'); }
+    try { await navigator.clipboard.writeText(txt); alert('Copiado.'); }
     catch { alert('Não foi possível copiar.'); }
   };
 
@@ -111,10 +163,7 @@ export default function Anotacoes() {
       try {
         const imported = JSON.parse(reader.result);
         if (!Array.isArray(imported)) throw new Error('Formato inválido');
-        const byId = new Map(notes.map(n => [n.id, n]));
-        imported.forEach(n => { if (n && n.id && n.texto) byId.set(n.id, { pinned: false, ...n }); });
-        const merged = Array.from(byId.values()).sort((a, b) => (b.criado_em || '').localeCompare(a.criado_em || ''));
-        saveLocal(merged);
+        persistBoth(normalizeNotes([...(notes || []), ...imported]));
         alert('Importado com sucesso!');
       } catch (err) {
         alert('Falha ao importar: ' + (err?.message || 'erro'));
@@ -129,16 +178,12 @@ export default function Anotacoes() {
     }
   };
 
-  const aulasPath = `/aulas/${bibliotecaId}/${finalUsuarioId}`;
+  const aulasPath    = `/aulas/${bibliotecaId}/${finalUsuarioId}`;
   const commentsBase = `/videos/${bibliotecaId}/${finalUsuarioId}`;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const base = [...notes].sort((a, b) => {
-      if (a.pinned && !b.pinned) return -1;
-      if (!a.pinned && b.pinned) return 1;
-      return (b.criado_em || '').localeCompare(a.criado_em || '');
-    });
+    const base = [...notes]; // já vem ordenado no normalize
     return q ? base.filter(n => n.texto.toLowerCase().includes(q)) : base;
   }, [notes, search]);
 
@@ -167,15 +212,21 @@ export default function Anotacoes() {
               className="notes-search"
             />
             <button onClick={exportJson} className="notes-btn">
-              <FaDownload className="mr" /> Exportar
+              <FaDownload /> Exportar
             </button>
             <button onClick={() => fileInputRef.current?.click()} className="notes-btn">
-              <FaUpload className="mr" /> Importar
+              <FaUpload /> Importar
             </button>
-            <input ref={fileInputRef} type="file" accept="application/json" onChange={importJson} style={{ display: 'none' }} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json"
+              onChange={importJson}
+              style={{ display: 'none' }}
+            />
             {notes.length > 0 && (
               <button onClick={removeAll} className="notes-btn danger">
-                <FaTrash className="mr" /> Limpar
+                <FaTrash /> Limpar
               </button>
             )}
           </div>
@@ -183,6 +234,7 @@ export default function Anotacoes() {
 
         <div className="notes-editor">
           <textarea
+            ref={textareaRef}
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             onKeyDown={onTextareaKeyDown}
@@ -208,7 +260,7 @@ export default function Anotacoes() {
           )}
 
           {filtered.map(n => (
-            <div key={n.id} className={`notes-card ${n.pinned ? 'pinned' : ''}`}>
+            <div key={n.id || `${n.texto}-${n.criado_em}`} className={`notes-card ${n.pinned ? 'pinned' : ''}`}>
               <div className="notes-card-head">
                 <small className="notes-date">{new Date(n.criado_em).toLocaleString()}</small>
                 {n.pinned && <span className="notes-pin-badge">fixada</span>}

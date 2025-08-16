@@ -12,7 +12,7 @@ class AulasModel {
 
     /**
      * Metadados da "biblioteca" (curso) + progresso médio do usuário nas aulas desse curso.
-     * IMPORTANTE: não retorna url_video (Aulas é independente do vídeo da biblioteca).
+     * Usa sempre o registro MAIS RECENTE de progresso_aula por aula/usuário.
      */
     public function getBiblioteca(int $bid, int $uid): array {
         error_log("[AulasModel::getBiblioteca] IN bid={$bid} uid={$uid}");
@@ -23,15 +23,30 @@ class AulasModel {
                 b.titulo,
                 b.descricao,
                 b.imagem_capa,
-                COALESCE(AVG(pa.percentual), 0) AS progresso
+                COALESCE(AVG(COALESCE(pa_latest.percentual, 0)), 0) AS progresso
             FROM biblioteca b
-            LEFT JOIN modulos m         ON m.biblioteca_id = b.id
-            LEFT JOIN aulas   a         ON a.modulo_id     = m.id
-            LEFT JOIN progresso_aula pa ON pa.aula_id      = a.id AND pa.usuario_id = :uid
+            LEFT JOIN modulos m ON m.biblioteca_id = b.id
+            LEFT JOIN aulas   a ON a.modulo_id     = m.id
+            /* progresso mais recente por aula/usuário */
+            LEFT JOIN (
+                SELECT x.aula_id, x.percentual
+                  FROM progresso_aula x
+                  JOIN (
+                        SELECT aula_id,
+                               MAX(atualizado_em) AS max_at,
+                               MAX(id)            AS max_id
+                          FROM progresso_aula
+                         WHERE usuario_id = :uid
+                         GROUP BY aula_id
+                  ) last ON last.aula_id = x.aula_id
+                       AND (x.atualizado_em = last.max_at OR x.id = last.max_id)
+                 WHERE x.usuario_id = :uid
+            ) pa_latest ON pa_latest.aula_id = a.id
             WHERE b.id = :bid
             GROUP BY b.id, b.titulo, b.descricao, b.imagem_capa
             LIMIT 1
         ";
+
         try {
             $st = $this->conn->prepare($sql);
             $st->execute([':bid'=>$bid, ':uid'=>$uid]);
@@ -68,7 +83,7 @@ class AulasModel {
             JOIN modulos m ON m.id = a.modulo_id
             WHERE m.biblioteca_id = :bid
               AND pa.usuario_id   = :uid
-            ORDER BY pa.atualizado_em DESC
+            ORDER BY pa.atualizado_em DESC, pa.id DESC
             LIMIT 1
         ";
         $st = $this->conn->prepare($sql);
@@ -80,11 +95,12 @@ class AulasModel {
 
     /**
      * Módulos + aulas + progresso/bloqueio por aula, ordenados.
+     * Junta SEMPRE a linha mais recente de progresso_aula para o usuário.
+     * Dedup é aplicado ANTES do desbloqueio sequencial.
      */
     public function getModulosEAulas(int $bid, int $uid): array {
         error_log("[AulasModel::getModulosEAulas] IN bid={$bid} uid={$uid}");
 
-        // 1) Completo (com progresso)
         $sqlFull = "
             SELECT
                 m.id     AS modulo_id,
@@ -103,10 +119,19 @@ class AulasModel {
                 COALESCE(pa.concluido,0)  AS aula_concluido
             FROM modulos m
             JOIN aulas a ON a.modulo_id = m.id
-            LEFT JOIN progresso_aula pa ON pa.aula_id = a.id AND pa.usuario_id = :uid
+            LEFT JOIN progresso_aula pa
+                   ON pa.id = (
+                        SELECT pa2.id
+                          FROM progresso_aula pa2
+                         WHERE pa2.aula_id = a.id
+                           AND pa2.usuario_id = :uid
+                         ORDER BY pa2.atualizado_em DESC, pa2.id DESC
+                         LIMIT 1
+                   )
             WHERE m.biblioteca_id = :bid
             ORDER BY m.ordem ASC, a.ordem ASC, a.id ASC
         ";
+
         try {
             $st = $this->conn->prepare($sqlFull);
             $st->execute([':bid'=>$bid, ':uid'=>$uid]);
@@ -115,7 +140,6 @@ class AulasModel {
         } catch (Throwable $e1) {
             error_log("[AulasModel::getModulosEAulas] FULL FAIL — ".$e1->getMessage());
 
-            // 2) Lite (sem progresso)
             $sqlLite = "
                 SELECT
                     m.id     AS modulo_id,
@@ -148,7 +172,6 @@ class AulasModel {
                 unset($r);
             } catch (Throwable $e2) {
                 error_log("[AulasModel::getModulosEAulas] LITE FAIL — ".$e2->getMessage());
-                // 3) Ultra (mínimo)
                 $sqlUltra = "
                     SELECT
                         m.id   AS modulo_id,
@@ -179,10 +202,11 @@ class AulasModel {
             }
         }
 
-        // Linha única (trilha) para aplicar regras
+        // 1) Trilha única (como veio do DB)
         $trilha = [];
         foreach ($rows as $r) {
             $trilha[] = [
+                'modulo_id'    => (int)$r['modulo_id'],
                 'modulo_nome'  => $r['modulo_nome'] ?: 'Módulo',
                 'modulo_ordem' => (int)($r['modulo_ordem'] ?? 0),
 
@@ -200,19 +224,63 @@ class AulasModel {
         }
         error_log("[AulasModel::getModulosEAulas] trilha_count=".count($trilha));
 
-        // Desbloqueio sequencial
-        $prevConcluida = false;
-        foreach ($trilha as $i => &$a) {
-            $isConcl = ($a['concluido'] === 1) || ($a['progresso'] >= 100);
-            if ($i === 0) $a['bloqueado'] = $a['bloqueado'] ? 1 : 0;
-            else $a['bloqueado'] = ($a['bloqueado'] || !$prevConcluida) ? 1 : 0;
-            $prevConcluida = $isConcl;
+        // 2) DEDUP (por módulo + ordem) OU (módulo + título normalizado)
+        $dedup = [];
+        $posByKey = [];
+        foreach ($trilha as $a) {
+            $mod = $a['modulo_nome'] ?: 'Módulo';
+            $ord = isset($a['ordem']) ? (int)$a['ordem'] : null;
+            $tituloNorm = mb_strtolower(trim((string)($a['titulo'] ?? '')), 'UTF-8');
+            $key = $mod . '|' . ($ord !== null ? "ordem:$ord" : "titulo:$tituloNorm");
+
+            if (!isset($posByKey[$key])) {
+                $posByKey[$key] = count($dedup);
+                $dedup[] = $a;
+            } else {
+                $pos = $posByKey[$key];
+                // mantém a com menor id
+                if ((int)$a['id'] < (int)$dedup[$pos]['id']) {
+                    $dedup[$pos] = $a;
+                }
+            }
+        }
+        if (count($dedup) !== count($trilha)) {
+            error_log("[AulasModel::getModulosEAulas] DEDUP aplicado: ".count($trilha)." -> ".count($dedup));
+        }
+
+        // 3) Normaliza concluído se progresso >= 100
+        foreach ($dedup as &$a0) {
+            if ((float)($a0['progresso'] ?? 0) >= 100) $a0['concluido'] = 1;
+        }
+        unset($a0);
+
+        // 4) Desbloqueio sequencial: só entre aulas com player (ignora bloqueio manual)
+        $prevPlayableConcluida = true; // libera a primeira tocável SEMPRE
+        $jaVimosTocavel = false;
+
+        foreach ($dedup as $i => &$a) {
+            $hasPlayer = (trim((string)$a['embed_url']) !== '' || trim((string)$a['url_video']) !== '');
+            $isConcl   = (($a['concluido'] ?? 0) == 1) || ((float)($a['progresso'] ?? 0) >= 100);
+
+            if ($hasPlayer) {
+                if (!$jaVimosTocavel) {
+                    $a['bloqueado'] = 0;       // primeira tocável sempre livre
+                    $jaVimosTocavel = true;
+                } else {
+                    // depende apenas da aula tocável anterior ter sido concluída
+                    $a['bloqueado'] = $prevPlayableConcluida ? 0 : 1;
+                }
+                $prevPlayableConcluida = $isConcl;
+            } else {
+                // sem player não trava sequência
+                $a['bloqueado'] = 0;
+            }
         }
         unset($a);
 
-        // Agrupa por módulo
+        // 5) Agrupa por módulo
         $modulos = [];
-        foreach ($trilha as $aula) {
+        foreach ($dedup as $aula) {
             $nome = $aula['modulo_nome'];
             if (!isset($modulos[$nome])) $modulos[$nome] = [];
             $modulos[$nome][] = [

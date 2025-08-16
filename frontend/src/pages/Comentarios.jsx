@@ -1,5 +1,6 @@
+// frontend/src/pages/Comentarios.jsx
 import { useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState, useContext, useRef } from 'react';
+import { useEffect, useState, useContext, useRef, useMemo } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import api from '../services/api';
 import {
@@ -7,13 +8,15 @@ import {
   FaRegStickyNote,
   FaRegFileAlt,
   FaPlayCircle,
-  FaTrash
+  FaTrash,
 } from 'react-icons/fa';
 import { IoIosArrowBack } from 'react-icons/io';
 import './Video.css';
 
-const LS_KEY = (bib, uid) => `cv:comentarios:${bib}:${uid}`;
+const LS_KEY_USER   = (bib, uid) => `cv:comentarios:${bib}:${uid}`;
+const LS_KEY_PUBLIC = (bib)      => `cv:comentarios:${bib}`;
 
+// util: tempo relativo
 function timeAgo(iso) {
   try {
     const d = new Date(iso);
@@ -28,11 +31,46 @@ function timeAgo(iso) {
   } catch { return ''; }
 }
 
+// util: ler/gravar LS
+const readLS = (k) => {
+  try { const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : []; }
+  catch { return []; }
+};
+const writeLS = (k, v) => {
+  try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
+};
+
+// util: merge + dedup + ordenar
+function normalizeComments(list) {
+  const out = [];
+  const seen = new Set();
+  for (const c of (list || [])) {
+    const id = (c.id ?? '').toString().trim();
+    const sig = id ? `id:${id}` : `t:${(c.texto||'').trim()}|d:${c.criado_em||''}`;
+    if (!seen.has(sig)) {
+      seen.add(sig);
+      out.push({
+        id,
+        usuario_id: Number(c.usuario_id || 0),
+        nome: c.nome || 'Usuário',
+        texto: String(c.texto || ''),
+        criado_em: c.criado_em || new Date().toISOString(),
+      });
+    }
+  }
+  // mais recentes primeiro
+  out.sort((a,b) => new Date(b.criado_em) - new Date(a.criado_em));
+  return out;
+}
+
 export default function Comentarios() {
   const { bibliotecaId, usuarioId } = useParams();
   const navigate = useNavigate();
   const { usuario } = useContext(AuthContext);
   const finalUsuarioId = usuario?.id || usuarioId;
+
+  const LS_USER   = useMemo(() => LS_KEY_USER(bibliotecaId, finalUsuarioId), [bibliotecaId, finalUsuarioId]);
+  const LS_PUBLIC = useMemo(() => LS_KEY_PUBLIC(bibliotecaId),               [bibliotecaId]);
 
   const [curso, setCurso] = useState({ titulo: 'Carregando...' });
   const [comentarios, setComentarios] = useState([]);
@@ -56,31 +94,37 @@ export default function Comentarios() {
     return () => { alive = false; };
   }, [bibliotecaId, finalUsuarioId]);
 
-  // Busca comentários: tenta backend, senão localStorage
+  // Carrega comentários:
+  // 1) junta locais (user + public), mostra
+  // 2) tenta backend; se vier algo, mescla e persiste nas duas chaves
   useEffect(() => {
     let alive = true;
+
+    const localUser   = readLS(LS_USER);
+    const localPublic = readLS(LS_PUBLIC);
+    const localMerged = normalizeComments([...localUser, ...localPublic]);
+    setComentarios(localMerged);
+
     (async () => {
       try {
         const r = await api.get(`comentarios/listar/${bibliotecaId}/${finalUsuarioId}`);
         if (!alive) return;
-        if (r.data?.sucesso && Array.isArray(r.data?.comentarios)) {
-          setComentarios(r.data.comentarios);
-          localStorage.setItem(LS_KEY(bibliotecaId, finalUsuarioId), JSON.stringify(r.data.comentarios));
-          return;
-        }
-        throw new Error('fallback local');
+
+        const remote = Array.isArray(r?.data?.comentarios) ? r.data.comentarios : [];
+        // se backend vier vazio, NÃO apaga o local — apenas mantém
+        const finalMerged = normalizeComments([...localMerged, ...remote]);
+
+        setComentarios(finalMerged);
+        // salva em AMBAS as chaves para sobreviver a logout/troca de usuário
+        writeLS(LS_USER, finalMerged);
+        writeLS(LS_PUBLIC, finalMerged);
       } catch {
-        const raw = localStorage.getItem(LS_KEY(bibliotecaId, finalUsuarioId));
-        setComentarios(raw ? JSON.parse(raw) : []);
+        // offline/404 -> mantém os locais já carregados
       }
     })();
-    return () => { alive = false; };
-  }, [bibliotecaId, finalUsuarioId]);
 
-  const salvarLocal = (list) => {
-    setComentarios(list);
-    localStorage.setItem(LS_KEY(bibliotecaId, finalUsuarioId), JSON.stringify(list));
-  };
+    return () => { alive = false; };
+  }, [bibliotecaId, finalUsuarioId, LS_USER, LS_PUBLIC]);
 
   // textarea auto-grow
   useEffect(() => {
@@ -90,20 +134,29 @@ export default function Comentarios() {
     el.style.height = Math.min(el.scrollHeight, 140) + 'px';
   }, [texto]);
 
+  // salva nas duas chaves + estado
+  const persistBoth = (list) => {
+    const norm = normalizeComments(list);
+    setComentarios(norm);
+    writeLS(LS_USER, norm);
+    writeLS(LS_PUBLIC, norm);
+  };
+
   const enviar = async () => {
     const msg = texto.trim();
     if (!msg || sending) return;
     setSending(true);
 
-    // Otimista
+    const tempId = `local-${Date.now()}`;
     const novo = {
-      id: Date.now(), // até voltar do backend
+      id: tempId,
       usuario_id: Number(finalUsuarioId),
       nome: usuario?.nome || 'Você',
       texto: msg,
       criado_em: new Date().toISOString(),
     };
-    salvarLocal([novo, ...comentarios]);
+
+    persistBoth([novo, ...comentarios]);
     setTexto('');
 
     try {
@@ -112,15 +165,16 @@ export default function Comentarios() {
         usuario_id: Number(finalUsuarioId),
         texto: msg,
       });
-      // Se o backend devolver o ID real, substitui
       const realId = r?.data?.comentario?.id;
       if (realId) {
-        salvarLocal(prev =>
-          (prev || []).map(c => (c.id === novo.id ? { ...c, id: realId } : c))
+        // troca o tempId pelo id real em AMBOS os storages
+        const replaced = (readLS(LS_USER).length ? readLS(LS_USER) : comentarios).map(c =>
+          c.id === tempId ? { ...c, id: String(realId) } : c
         );
+        persistBoth(replaced);
       }
     } catch {
-      // mantém local; opcional: marcar como "pendente"
+      // mantém local; continua persistente mesmo sem backend
     } finally {
       setSending(false);
       inputRef.current?.focus();
@@ -128,8 +182,10 @@ export default function Comentarios() {
   };
 
   const remover = async (id) => {
-    // Otimista
-    salvarLocal(comentarios.filter(c => c.id !== id));
+    // Remove por id e também por assinatura texto+data (garantia contra diferenças)
+    const removeBy = (arr) => arr.filter(c => c.id !== id);
+    const after = removeBy(comentarios);
+    persistBoth(after);
     try { await api.delete(`comentarios/${id}`); } catch {}
   };
 
@@ -172,7 +228,7 @@ export default function Comentarios() {
             display: 'grid',
             gridTemplateColumns: '1fr auto',
             gap: 8,
-            margin: '8px 0 16px'
+            margin: '8px 0 16px',
           }}
         >
           <textarea
@@ -194,7 +250,7 @@ export default function Comentarios() {
               border: '1px solid #333',
               borderRadius: 8,
               padding: '10px 12px',
-              outline: 'none'
+              outline: 'none',
             }}
           />
           <button
@@ -210,7 +266,7 @@ export default function Comentarios() {
               fontWeight: 600,
               minHeight: 38,
               minWidth: 88,
-              cursor: !texto.trim() ? 'not-allowed' : 'pointer'
+              cursor: !texto.trim() ? 'not-allowed' : 'pointer',
             }}
           >
             {sending ? 'Enviando…' : 'Enviar'}
@@ -225,16 +281,16 @@ export default function Comentarios() {
 
           {comentarios.map(c => (
             <div
-              key={c.id}
+              key={c.id || `${c.texto}-${c.criado_em}`}
               style={{
                 background: '#1e1e1e',
                 border: '1px solid #2a2a2a',
                 borderRadius: 10,
-                padding: 12
+                padding: 12,
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent:'space-between', marginBottom: 6 }}>
+                <div style={{ display:'flex', alignItems:'baseline', gap: 8 }}>
                   <strong style={{ fontSize: 13 }}>{c.nome || 'Usuário'}</strong>
                   <span style={{ fontSize: 12, color: 'rgba(255,255,255,.55)' }}>
                     {c.criado_em ? timeAgo(c.criado_em) : ''}
@@ -248,7 +304,7 @@ export default function Comentarios() {
                   <FaTrash size={14} />
                 </button>
               </div>
-              <div style={{ fontSize: 14, color: 'rgba(255,255,255,.88)', whiteSpace: 'pre-wrap' }}>
+              <div style={{ fontSize: 14, color:'rgba(255,255,255,.88)', whiteSpace:'pre-wrap' }}>
                 {c.texto}
               </div>
             </div>

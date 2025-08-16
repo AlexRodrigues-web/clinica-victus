@@ -1,3 +1,4 @@
+/* ---- layout base ---- */
 .login-page {
   min-height: 100vh;
   display: flex;
@@ -32,7 +33,13 @@
   margin-bottom: 0.3rem;
 }
 
-.login-form input {
+/* ---- inputs ---- */
+.login-form input,
+.modal-box input {
+  /* evita que padding+borda estourem o container */
+  box-sizing: border-box;
+  max-width: 100%;
+
   width: 100%;
   padding: 0.8rem 1rem;
   border: 1px solid #ddd;
@@ -40,23 +47,75 @@
   background: #fdfdfd;
   font-size: 1rem;
   box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  outline: none;
 }
 
+.login-form input:focus,
+.modal-box input:focus {
+  border-color: #c9928a;
+  box-shadow: 0 0 0 3px rgba(201, 146, 138, 0.2);
+}
+
+/* ---- wrapper da password com botão interno ---- */
 .password-wrapper {
   position: relative;
+  width: 100%;
+  min-width: 0; /* impede overflow em flex/containers estreitos */
 }
 
+/* altura consistente e espaço pro botão do olho */
+.password-wrapper input {
+  height: 44px;
+  padding-right: 44px; /* espaço pro olho */
+}
+
+/* botão do olho (dentro do input) */
 .password-wrapper .toggle-password {
   position: absolute;
-  right: 12px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
+
+  /* reset/estilo do “botão” do olho */
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: #666;
   cursor: pointer;
-  font-size: 1.1rem;
-  opacity: 0.6;
+
+  /* não herdar sombras/tamanhos de botões globais */
+  box-shadow: none;
 }
 
-button {
+.password-wrapper .toggle-password:hover {
+  color: #333;
+  background: rgba(0,0,0,0.04);
+}
+
+.password-wrapper .toggle-password:focus-visible {
+  outline: 2px solid #c9928a;
+  outline-offset: 2px;
+}
+
+.password-wrapper .toggle-password svg {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+/* ---- botões principais (escopo seguro) ---- */
+/* evita pegar o botão do olho */
+.login-form > button[type="submit"],
+.modal-box > button {
   width: 100%;
   padding: 0.9rem;
   background: #d7a9a2;
@@ -70,10 +129,18 @@ button {
   transition: background 0.3s;
 }
 
-button:hover {
+.login-form > button[type="submit"]:hover,
+.modal-box > button:hover {
   background: #c9928a;
 }
 
+.login-form > button[disabled],
+.modal-box > button[disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ---- mensagens ---- */
 .erro {
   color: red;
   margin-top: 0.5rem;
@@ -97,4 +164,40 @@ button:hover {
   font-size: 0.8rem;
   color: #777;
   line-height: 1.4;
+}
+
+/* ---- modal ---- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.modal-box h3 {
+  margin: 0 0 10px 0;
+}
+
+/* inputs específicos do modal */
+.modal-box .password-wrapper input {
+  padding-right: 44px;
+}
+
+/* botão secundário “Fechar” do modal */
+.modal-box .btn-secondary {
+  margin-top: 14px;
+  background: #ddd !important;
+  color: #333 !important;
 }

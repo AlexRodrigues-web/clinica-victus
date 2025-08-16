@@ -1,5 +1,6 @@
+// frontend/src/components/VideoLessons.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { FaLock, FaCheckCircle, FaRegStar, FaHeart, FaPlayCircle } from "react-icons/fa";
+import { FaLock, FaCheckCircle, FaRegStar, FaStar, FaHeart, FaPlayCircle } from "react-icons/fa";
 import { IoIosArrowBack } from "react-icons/io";
 import "./VideoLessons.css";
 
@@ -11,7 +12,13 @@ export default function VideoLessons({
   expanded: propExpanded,
   toggleModule: propToggleModule,
   showHeader = false,
-  onComplete, // callback para marcar aula concluída
+  onComplete,   // callback para marcar aula concluída
+  onNext,       // pai avança para a próxima (marca atual 100%, refetch e autoplay)
+  // === NOVO: prefs do vídeo + handlers ===
+  prefs = {},                      // { favorite, liked, completed }
+  onToggleFavorite = () => {},     // handler vindo do pai
+  onToggleLiked = () => {},        // handler vindo do pai
+  savingPrefs = false,             // bloqueia clique enquanto salva
 }) {
   const biblioteca = propBiblioteca || { id: 0, titulo: "Curso", progresso: 0 };
   const modulos = propModulos || {};
@@ -26,9 +33,22 @@ export default function VideoLessons({
   const expanded = propExpanded || localExpanded;
   const currentAula = propCurrentAula || localCurrentAula;
 
+  const todasAulas = useMemo(() => Object.values(modulos).flat(), [modulos]);
+  const currentIndex = useMemo(
+    () => (currentAula ? todasAulas.findIndex(a => a.id === currentAula.id) : -1),
+    [todasAulas, currentAula]
+  );
+
   const setCurrentAula = (aula) => {
     if (!aula) return;
+
+    // Se o usuário clicou na PRÓXIMA aula e ela está bloqueada, delega para onNext
+    const isNextOfCurrent = currentIndex >= 0 && todasAulas[currentIndex + 1]?.id === aula.id;
     if (aula.bloqueado) {
+      if (onNext && isNextOfCurrent) {
+        onNext(aula);
+        return;
+      }
       alert("Aula ainda bloqueada. Conclua a anterior para desbloquear.");
       return;
     }
@@ -74,14 +94,11 @@ export default function VideoLessons({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modulos]);
 
-  const todasAulas = useMemo(() => Object.values(modulos).flat(), [modulos]);
-
-  // próxima aula (apenas para exibir a pílula; se estiver bloqueada, mostramos alerta ao clicar)
+  // próxima aula (para o botão-pílula)
   const proximaAula = useMemo(() => {
-    if (!currentAula) return null;
-    const idx = todasAulas.findIndex((a) => a.id === currentAula.id);
-    return idx >= 0 && idx + 1 < todasAulas.length ? todasAulas[idx + 1] : null;
-  }, [todasAulas, currentAula]);
+    if (currentIndex < 0) return null;
+    return currentIndex + 1 < todasAulas.length ? todasAulas[currentIndex + 1] : null;
+  }, [todasAulas, currentIndex]);
 
   const formatPercent = (v) => `${Math.round(Number(v || 0))}%`;
 
@@ -100,7 +117,7 @@ export default function VideoLessons({
       {/* Header opcional (quando este componente for usado sozinho numa página) */}
       {showHeader && (
         <div className="vl-header">
-          <button className="vl-btn-back" onClick={() => window.history.back()} aria-label="Voltar">
+          <button className="vl-btn-back" onClick={() => window.history.back()} aria-label="Voltar" type="button">
             <IoIosArrowBack size={24} />
           </button>
           <div className="vl-course-info">
@@ -122,18 +139,55 @@ export default function VideoLessons({
             <h3 className="vl-lesson-title">{currentAula.titulo}</h3>
             <p className="vl-description">{currentAula.descricao || ""}</p>
           </div>
+
+          {/* === Ícones de ação (com estado + logs de erro) === */}
           <div className="vl-lesson-icons">
-            <button className="vl-icon-btn" aria-label="Favoritar">
-              <FaRegStar />
+            <button
+              className={`vl-icon-btn ${prefs?.favorite ? "active" : ""}`}
+              aria-label={prefs?.favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+              title={prefs?.favorite ? "Remover dos favoritos" : "Favoritar"}
+              onClick={() => {
+                try {
+                  onToggleFavorite();
+                } catch (e) {
+                  console.error("[VideoLessons] Erro ao alternar favorito:", e);
+                }
+              }}
+              disabled={savingPrefs}
+              type="button"
+            >
+              {prefs?.favorite ? <FaStar /> : <FaRegStar />}
             </button>
-            <button className="vl-icon-btn" aria-label="Curtir">
+
+            <button
+              className={`vl-icon-btn ${prefs?.liked ? "active" : ""}`}
+              aria-label={prefs?.liked ? "Remover curtida" : "Curtir"}
+              title={prefs?.liked ? "Remover curtida" : "Curtir"}
+              onClick={() => {
+                try {
+                  onToggleLiked();
+                } catch (e) {
+                  console.error("[VideoLessons] Erro ao alternar curtida:", e);
+                }
+              }}
+              disabled={savingPrefs}
+              type="button"
+            >
               <FaHeart />
             </button>
+
             <button
               className={`vl-icon-btn completed ${Number(currentAula.progresso || 0) >= 100 ? "active" : ""}`}
               aria-label="Concluído"
-              onClick={onComplete}
               title="Marcar como concluída"
+              onClick={() => {
+                try {
+                  onComplete && onComplete();
+                } catch (e) {
+                  console.error("[VideoLessons] Erro ao marcar concluído:", e);
+                }
+              }}
+              type="button"
             >
               <FaCheckCircle />
             </button>
@@ -145,12 +199,18 @@ export default function VideoLessons({
       {proximaAula && (
         <button
           className="vl-btn-next updated"
-          onClick={() =>
-            proximaAula.bloqueado
-              ? alert("Aula ainda bloqueada. Conclua a anterior para desbloquear.")
-              : setCurrentAula(proximaAula)
-          }
+          onClick={() => {
+            if (onNext) {
+              onNext(proximaAula); // pai conclui a atual, refetch e abre a próxima já desbloqueada
+            } else {
+              // fallback
+              proximaAula.bloqueado
+                ? alert("Aula ainda bloqueada. Conclua a anterior para desbloquear.")
+                : setCurrentAula(proximaAula);
+            }
+          }}
           aria-label={`Próxima aula ${proximaAula.titulo}`}
+          type="button"
         >
           <div className="vl-next-info">
             <span className="vl-next-label">Próxima aula</span>
@@ -162,7 +222,7 @@ export default function VideoLessons({
               height: 30,
               borderRadius: 999,
               display: "grid",
-              placeItems: "center", // camelCase correto
+              placeItems: "center",
               background: "#f0c94b",
             }}
           >
@@ -182,6 +242,7 @@ export default function VideoLessons({
                 onClick={() => toggleModule(moduloNome)}
                 aria-expanded={!!expanded[moduloNome]}
                 aria-controls={`modulo-${moduloNome}`}
+                type="button"
               >
                 <span className={`vl-module-badge ${status}`}>
                   {status === "done" ? <FaCheckCircle /> : status === "open" ? <FaRegStar /> : <FaLock />}
@@ -198,6 +259,9 @@ export default function VideoLessons({
                     const completa = Number(aula.progresso || 0) >= 100;
                     const progressoAula = Number(aula.progresso || 0);
 
+                    const isNextOfCurrent =
+                      currentIndex >= 0 && todasAulas[currentIndex + 1]?.id === aula.id;
+
                     return (
                       <button
                         key={aula.id}
@@ -205,8 +269,10 @@ export default function VideoLessons({
                         onClick={() => setCurrentAula(aula)}
                         aria-current={isCurrent ? "true" : undefined}
                         aria-disabled={bloqueada ? "true" : "false"}
-                        disabled={bloqueada}
+                        // se bloqueada mas for a próxima, permitimos o clique p/ acionar onNext
+                        disabled={bloqueada && !(onNext && isNextOfCurrent)}
                         title={bloqueada ? "Bloqueada" : aula.titulo}
+                        type="button"
                       >
                         <span className={`vl-status-icon ${bloqueada ? "locked" : completa ? "completed" : "incomplete"}`}>
                           {bloqueada ? <FaLock /> : completa ? <FaCheckCircle /> : <FaRegStar />}

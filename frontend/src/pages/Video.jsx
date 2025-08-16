@@ -1,6 +1,6 @@
 // src/pages/Video.jsx
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useState, useMemo, useContext } from 'react';
+import { useEffect, useState, useMemo, useContext, useRef } from 'react';
 import {
   FaPlayCircle,
   FaRegCommentDots,
@@ -8,10 +8,11 @@ import {
   FaRegFileAlt,
   FaCheckCircle,
   FaRegStar,
+  FaStar,
   FaHeart
 } from 'react-icons/fa';
 import './Video.css';
-import api from '../services/api';
+import api, { getPrefs, setPrefs, DEFAULT_VIDEO_PREFS } from '../services/api';
 import { AuthContext } from '../contexts/AuthContext';
 
 // ==== Helpers YouTube (robustos) ====
@@ -69,6 +70,14 @@ function pickVideoUrl(b = {}) {
   return candidates.length ? String(candidates[0]) : '';
 }
 
+// === chaves de storage ===
+const LS_KEY = (bib, uid) => `cv:video:prefs:${bib}:${uid}`;
+const MAP_B2C_KEY = (bib) => `cv:b2c:${bib}`;         // biblioteca -> curso
+const LAST_CURSO_KEY = `cv:aulas:lastCurso`;          // último curso válido global
+
+// ===== CURSO PADRÃO (fallback) =====
+const FALLBACK_CURSO_ID = 6;
+
 export default function Video() {
   const { bibliotecaId, usuarioId } = useParams();
   const navigate = useNavigate();
@@ -83,7 +92,10 @@ export default function Video() {
 
   // existe curso/aulas mapeadas?
   const [hasAulas, setHasAulas] = useState(null); // null=carregando
-  const [cursoResolvido, setCursoResolvido] = useState(null); // ex.: 4 -> 6
+  const [cursoResolvido, setCursoResolvido] = useState(null); // ex.: 19 -> 6
+
+  // Sempre guarda o último curso válido (≠ do vídeo) para navegações futuras
+  const lastGoodCursoIdRef = useRef(null);
 
   // usa o user logado quando houver
   const finalUsuarioId = usuario?.id || usuarioId;
@@ -92,10 +104,95 @@ export default function Video() {
   const search = new URLSearchParams(location.search);
   const debugMode = search.get('debug') === '1' && process.env.NODE_ENV !== 'production';
 
+  // === preferências persistentes (backend + cache local) ===
+  const [prefs, setPrefsState] = useState(DEFAULT_VIDEO_PREFS);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+
+  // utilitários de storage
+  const readB2C = (bib) => {
+    try { return Number(sessionStorage.getItem(MAP_B2C_KEY(bib))) || null; } catch { return null; }
+  };
+  const writeB2C = (bib, curso) => {
+    try { sessionStorage.setItem(MAP_B2C_KEY(bib), String(curso)); } catch {}
+  };
+  const readLastCurso = () => {
+    try { return Number(sessionStorage.getItem(LAST_CURSO_KEY)) || null; } catch { return null; }
+  };
+  const writeLastCurso = (curso) => {
+    try { sessionStorage.setItem(LAST_CURSO_KEY, String(curso)); } catch {}
+  };
+
+  // semente inicial do ref a partir do cache (antes de chamar API)
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      navigate('/login');
+    const bibNum = Number(bibliotecaId) || 0;
+    const cached = readB2C(bibNum) || readLastCurso();
+    if (cached && cached !== bibNum) {
+      lastGoodCursoIdRef.current = cached;
+      if (debugMode) console.debug('[Video.jsx] seed lastGoodCursoIdRef from cache:', cached);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bibliotecaId]);
+
+  // carrega prefs do backend (com fallback ao cache local)
+  useEffect(() => {
+    let cancel = false;
+    async function loadPrefs() {
+      try {
+        const data = await getPrefs(Number(bibliotecaId), Number(finalUsuarioId));
+        if (!cancel) {
+          const next = { favorite: !!data.favorite, liked: !!data.liked, completed: !!data.completed };
+          setPrefsState(next);
+          localStorage.setItem(LS_KEY(bibliotecaId, finalUsuarioId), JSON.stringify(next));
+        }
+      } catch (e) {
+        console.error('[Video] Erro ao carregar prefs:', e);
+        try {
+          const raw = localStorage.getItem(LS_KEY(bibliotecaId, finalUsuarioId));
+          setPrefsState(raw ? JSON.parse(raw) : DEFAULT_VIDEO_PREFS);
+        } catch {
+          setPrefsState(DEFAULT_VIDEO_PREFS);
+        }
+      }
+    }
+    loadPrefs();
+    return () => { cancel = true; };
+  }, [bibliotecaId, finalUsuarioId]);
+
+  // togglers (otimistas)
+  const persist = async (next) => {
+    try { localStorage.setItem(LS_KEY(bibliotecaId, finalUsuarioId), JSON.stringify(next)); } catch {}
+    try {
+      setSavingPrefs(true);
+      await setPrefs(Number(bibliotecaId), Number(finalUsuarioId), {
+        favorite: next.favorite ? 1 : 0,
+        liked: next.liked ? 1 : 0,
+        completed: next.completed ? 1 : 0,
+      });
+    } catch (e) {
+      console.error('[Video] Erro ao salvar prefs:', e);
+    } finally {
+      setSavingPrefs(false);
+    }
+  };
+
+  const toggleFavorite = async () => {
+    const next = { ...prefs, favorite: !prefs.favorite };
+    setPrefsState(next);
+    await persist(next);
+  };
+  const toggleLiked = async () => {
+    const next = { ...prefs, liked: !prefs.liked };
+    setPrefsState(next);
+    await persist(next);
+  };
+  const toggleCompleted = async () => {
+    const next = { ...prefs, completed: !prefs.completed };
+    setPrefsState(next);
+    await persist(next);
+  };
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) navigate('/login');
   }, [isAuthenticated, isLoading, navigate]);
 
   // carrega os metadados do vídeo da BIBLIOTECA
@@ -137,21 +234,29 @@ export default function Video() {
   useEffect(() => {
     let cancel = false;
     async function checarAulas() {
+      const bibNum = Number(bibliotecaId) || 0;
       try {
         setHasAulas(null);
         const params = debugMode ? { debug: 1 } : {};
         const r = await api.get(`aulas/tem/${bibliotecaId}`, { params });
         const tem = !!r.data?.tem;
-        const resolved = Number(r.data?.curso_resolvido) || Number(bibliotecaId);
+        const resolved = Number(r.data?.curso_resolvido) || null;
         if (!cancel) {
           setHasAulas(tem);
           setCursoResolvido(resolved);
+
+          // memorize se diferente do vídeo (válido)
+          if (resolved && resolved !== bibNum) {
+            lastGoodCursoIdRef.current = resolved;
+            writeB2C(bibNum, resolved);
+            writeLastCurso(resolved);
+          }
           if (debugMode) console.debug('[Video.jsx] aulas/tem ->', { bibliotecaId, tem, curso_resolvido: resolved });
         }
       } catch (e) {
         if (!cancel) {
           setHasAulas(false);
-          setCursoResolvido(Number(bibliotecaId) || null);
+          setCursoResolvido(null);
           if (debugMode) console.debug('[Video.jsx] aulas/tem ERROR ->', e?.message || e);
         }
       }
@@ -177,9 +282,57 @@ export default function Video() {
     };
   }, []);
 
-  // bases das abas
-  const aulasPath    = `/aulas/${(cursoResolvido ?? bibliotecaId)}/${finalUsuarioId}`; // usa curso_resolvido!
-  const aulasQuery   = `?from=${encodeURIComponent(bibliotecaId)}`; // preserva origem (biblioteca)
+  // ==== Navegar SEMPRE para um curso válido (nunca pro ID da biblioteca) ====
+  const resolveCursoAlvo = async () => {
+    const bibIdNum = Number(bibliotecaId) || 0;
+
+    // 0) cache primeiro
+    let target = readB2C(bibIdNum);
+    if (target && target !== bibIdNum) return target;
+
+    // 1) ref em memória
+    if (lastGoodCursoIdRef.current && lastGoodCursoIdRef.current !== bibIdNum) {
+      return lastGoodCursoIdRef.current;
+    }
+
+    // 2) resolve on-demand
+    try {
+      const params = debugMode ? { debug: 1 } : {};
+      const r = await api.get(`aulas/tem/${bibliotecaId}`, { params });
+      const tem = !!r.data?.tem;
+      const resolved = Number(r.data?.curso_resolvido) || 0;
+      if (tem && resolved > 0 && resolved !== bibIdNum) {
+        writeB2C(bibIdNum, resolved);
+        writeLastCurso(resolved);
+        lastGoodCursoIdRef.current = resolved;
+        return resolved;
+      }
+    } catch (e) {
+      console.error('[Video.jsx] resolveCursoAlvo — erro ao resolver curso:', e);
+    }
+
+    // 3) fallback final
+    return FALLBACK_CURSO_ID;
+  };
+
+  const goToAulas = async () => {
+    setIsPlaying(false);
+    const alvo = await resolveCursoAlvo();
+    // IMPORTANTE: sem ?from= para não haver lógica externa sobrescrevendo
+    navigate(`/aulas/${alvo}/${finalUsuarioId}`);
+  };
+
+  // Voltar do header: volta para AULAS se houver contexto, senão para Biblioteca
+  const goBackSmart = async () => {
+    const bibIdNum = Number(bibliotecaId) || 0;
+    const cached = readB2C(bibIdNum) || lastGoodCursoIdRef.current || readLastCurso();
+    if (cached && cached !== bibIdNum) {
+      navigate(`/aulas/${cached}/${finalUsuarioId}`);
+    } else {
+      navigate('/biblioteca');
+    }
+  };
+
   const commentsBase = `/videos/${bibliotecaId}/${finalUsuarioId}`;
   const isComentarios = location.pathname.startsWith(`${commentsBase}/comentarios`);
   const isAnotacoes   = location.pathname.startsWith(`${commentsBase}/anotacoes`);
@@ -201,7 +354,7 @@ export default function Video() {
       <header className="video-header">
         <span
           className="header-back-btn"
-          onClick={() => navigate('/biblioteca')}
+          onClick={goBackSmart}
           aria-label="Voltar"
         >
           ←
@@ -261,72 +414,88 @@ export default function Video() {
             <h2 className="intro-title">{video.titulo}</h2>
             <p className="intro-description">{video.descricao}</p>
           </div>
+
+          {/* Ações persistentes */}
           <div className="action-icons">
-            <button aria-label="Favoritar" className="icon-btn"><FaRegStar /></button>
-            <button aria-label="Curtir" className="icon-btn"><FaHeart /></button>
-            <button aria-label="Concluído" className="icon-btn completed">
-              <FaCheckCircle style={{ color: 'rgba(255,255,255,0.4)' }} />
+            <button
+              aria-label={prefs.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+              className={`icon-btn ${prefs.favorite ? 'active' : ''}`}
+              onClick={toggleFavorite}
+              aria-pressed={prefs.favorite}
+              title={prefs.favorite ? 'Remover dos favoritos' : 'Favoritar'}
+              disabled={savingPrefs}
+            >
+              {prefs.favorite ? <FaStar /> : <FaRegStar />}
+            </button>
+
+            <button
+              aria-label={prefs.liked ? 'Remover curtida' : 'Curtir'}
+              className={`icon-btn ${prefs.liked ? 'active' : ''}`}
+              onClick={toggleLiked}
+              aria-pressed={prefs.liked}
+              title={prefs.liked ? 'Remover curtida' : 'Curtir'}
+              disabled={savingPrefs}
+            >
+              <FaHeart />
+            </button>
+
+            <button
+              aria-label={prefs.completed ? 'Desmarcar concluído' : 'Marcar como concluído'}
+              className={`icon-btn completed ${prefs.completed ? 'active' : ''}`}
+              onClick={toggleCompleted}
+              aria-pressed={prefs.completed}
+              title={prefs.completed ? 'Concluído' : 'Marcar como concluído'}
+              disabled={savingPrefs}
+            >
+              <FaCheckCircle />
             </button>
           </div>
         </div>
       </section>
 
       {/* Footer com navegação para as seções */}
-<footer className="video-footer">
-  {/* Só mostra Aulas se o backend disser que TEM */}
-  {hasAulas === true && (
-    <div
-      className="footer-item"
-      onClick={() => {
-        // para o vídeo antes de sair
-        setIsPlaying(false);
-        const to = `${aulasPath}${aulasQuery}`;
-        if (debugMode) console.debug('[Video.jsx] indo para Aulas:', to);
-        navigate(to);
-      }}
-    >
-      <FaPlayCircle size={20} />
-      <div className="footer-label">Aulas</div>
-    </div>
-  )}
+      <footer className="video-footer">
+        <div className="footer-item" onClick={goToAulas} title="Aulas">
+          <FaPlayCircle size={20} />
+          <div className="footer-label">Aulas</div>
+        </div>
 
-  <div
-    className={`footer-item ${isComentarios ? 'active' : ''}`}
-    onClick={() => {
-      setIsPlaying(false);
-      navigate(`${commentsBase}/comentarios`);
-    }}
-    aria-current={isComentarios ? 'page' : undefined}
-  >
-    <FaRegCommentDots size={20} />
-    <div className="footer-label">Comentários</div>
-  </div>
+        <div
+          className={`footer-item ${isComentarios ? 'active' : ''}`}
+          onClick={() => {
+            setIsPlaying(false);
+            navigate(`${commentsBase}/comentarios`);
+          }}
+          aria-current={isComentarios ? 'page' : undefined}
+        >
+          <FaRegCommentDots size={20} />
+          <div className="footer-label">Comentários</div>
+        </div>
 
-  <div
-    className={`footer-item ${isAnotacoes ? 'active' : ''}`}
-    onClick={() => {
-      setIsPlaying(false);
-      navigate(`${commentsBase}/anotacoes`);
-    }}
-    aria-current={isAnotacoes ? 'page' : undefined}
-  >
-    <FaRegStickyNote size={20} />
-    <div className="footer-label">Anotações</div>
-  </div>
+        <div
+          className={`footer-item ${isAnotacoes ? 'active' : ''}`}
+          onClick={() => {
+            setIsPlaying(false);
+            navigate(`${commentsBase}/anotacoes`);
+          }}
+          aria-current={isAnotacoes ? 'page' : undefined}
+        >
+          <FaRegStickyNote size={20} />
+          <div className="footer-label">Anotações</div>
+        </div>
 
-  <div
-    className={`footer-item ${isMateriais ? 'active' : ''}`}
-    onClick={() => {
-      setIsPlaying(false);
-      navigate(`${commentsBase}/materiais`);
-    }}
-    aria-current={isMateriais ? 'page' : undefined}
-  >
-    <FaRegFileAlt size={20} />
-    <div className="footer-label">Materiais</div>
-  </div>
-</footer>
-
+        <div
+          className={`footer-item ${isMateriais ? 'active' : ''}`}
+          onClick={() => {
+            setIsPlaying(false);
+            navigate(`${commentsBase}/materiais`);
+          }}
+          aria-current={isMateriais ? 'page' : undefined}
+        >
+          <FaRegFileAlt size={20} />
+          <div className="footer-label">Materiais</div>
+        </div>
+      </footer>
     </div>
   );
 }

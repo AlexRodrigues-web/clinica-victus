@@ -1,0 +1,11 @@
+# === uploads / storage / env / logs ===
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/storage/*
+!backend/storage/.gitkeep
+frontend/node_modules/
+backend/vendor/
+**/.env
+*.log
+.DS_Store
+Thumbs.db

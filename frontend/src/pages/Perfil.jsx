@@ -1,5 +1,6 @@
 // frontend/src/pages/Perfil.jsx
 import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { motion } from 'framer-motion';
 import {
@@ -13,8 +14,9 @@ import { AuthContext } from '../contexts/AuthContext';
 import './Perfil.css';
 
 export default function Perfil() {
-  // agora pegamos do contexto
-  const { usuario: authUser, updateUsuario } = useContext(AuthContext);
+  // pega do contexto (inclui logout!)
+  const { usuario: authUser, updateUsuario, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   // estado local só para controlar o formulário
   const [usuario, setUsuario] = useState(null);
@@ -74,14 +76,10 @@ export default function Perfil() {
       });
 
       if (res.data?.foto_perfil) {
-        // atualiza o estado local
         const atualizado = { ...usuario, foto_perfil: res.data.foto_perfil };
         setUsuario(atualizado);
         setForm(prev => ({ ...prev, foto_perfil: res.data.foto_perfil }));
-
-        // **IMPORTANTE**: também atualiza o contexto
         updateUsuario(atualizado);
-
         alert('Foto atualizada com sucesso!');
       } else {
         throw new Error('Resposta inesperada do upload');
@@ -90,6 +88,12 @@ export default function Perfil() {
       console.error('Erro ao atualizar foto', err);
       alert('Erro ao atualizar foto.');
     }
+  };
+
+  // 🔴 NOVO: sair da conta
+  const handleLogout = () => {
+    logout();           // limpa token + usuário + header do axios + localStorage
+    navigate('/login'); // volta para tela de login
   };
 
   if (!usuario) {
@@ -224,11 +228,11 @@ export default function Perfil() {
       </motion.div>
 
       <div className="logout-area">
-        <button className="botao-sair">
+        <button className="botao-sair" type="button" onClick={handleLogout}>
           <FaPowerOff /> Sair da Conta
         </button>
         <br/>
-        <button className="botao-salvar" onClick={salvarAlteracoes}>
+        <button className="botao-salvar" type="button" onClick={salvarAlteracoes}>
           <FaSave /> Salvar Alterações
         </button>
       </div>

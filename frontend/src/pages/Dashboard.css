@@ -1,593 +1,652 @@
-.dashboard-container {
-  padding: 1.5rem;
-  background-color: #fff;
-  min-height: 100vh;
-  font-family: 'Inter', sans-serif;
-  color: #333;
+/* =========================================================
+   DASHBOARD — Replica fiel do mock (cores e medidas calibradas)
+   ========================================================= */
+
+/* Reset + consistência tipográfica entre SOs */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Dashboard.css */
+/* Paleta medida do mock (hex extraídos do print) */
+:root{
+  --vc-bg: #ffffff;
+  --vc-ink: #1b1b1b;
 
-/* Topo com saudação */
+  /* tons rosé usados nos cards (muito claros, quase off-white) */
+  --vc-rose-25:  #f7efeb;  /* fundo do card de progresso (medido)   */
+  --vc-rose-50:  #f8f2f1;  /* base clara dos cards (medido)         */
+  --vc-rose-100: #f4f1f0;  /* fundo do card de eventos (medido)     */
+  --vc-rose-200: #d7b4af;  /* tom médio do rosa metálico (medido)   */
+
+  /* blend metálico (faixas tiradas do print) */
+  --vc-rose-metal-a: #dfc3b9; /* luz média */
+  --vc-rose-metal-b: #dbc8c5; /* centro    */
+  --vc-rose-metal-c: #cfaeaa; /* sombra    */
+  --vc-rose-glow:    rgba(255,255,255,.38);
+
+  /* dourado do anel — calibrado no mock */
+  --vc-gold: #caa55a; /* dourado suave, levemente “areia” */
+
+  /* UI */
+  --vc-border: #e6e1de;
+  --vc-shadow: 0 8px 18px rgba(0,0,0,.06);
+}
+
+/* ====== Container ====== */
+.dashboard-container {
+  padding: clamp(16px, 3.8vw, 24px);
+  background-color: var(--vc-bg);
+  min-height: 100vh;
+  font-family: -apple-system, "SF Pro Text", "SF Pro Display", Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  color: var(--vc-ink);
+}
+
+/* ====== Topo ====== */
 .dashboard-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-top: 60px; /* cria espaço para o header fixo */
+  margin-bottom: clamp(16px, 3.8vw, 22px);
 }
 
 .dashboard-top h2 {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: #000;
+  font-size: clamp(1.12rem, 3.8vw, 1.35rem);
+  font-weight: 700;
+  color: #111;
   margin: 0;
 }
+.dashboard-top h2 span { font-weight: 800; letter-spacing: .1px; }
 
-.dashboard-top h2 span {
-  color: #000;
-}
+.dashboard-icons { display: flex; gap: 16px; margin-top: 2px; }
 
-/* Ícones do topo */
-.dashboard-icons {
-  display: flex;
-  gap: 20px; /* Aumenta espaçamento entre os botões */
-  margin-top: 4px;
-}
-
-.icon-button {
-  background: #000000;        /* Fundo preto */
-  border: none;
-  padding: 8px;               /* Aumenta área clicável */
-  border-radius: 50%;         /* Botão redondo */
-  cursor: pointer;
-  color: #ffffff;             /* Ícone branco */
-  transition: background 0.3s, transform 0.2s;
-}
-
-.icon-button:hover {
-  background: #333333;
-  transform: scale(1.05);
-}
-
-/* Saudações maiores */
-.dashboard-top h2 {
-  font-size: 1.4rem;        /* Tamanho maior */
-  font-weight: 500;
-  color: #111;
-}
-
-.dashboard-top h2 span {
-  font-weight: bold;
-}
-
-/* Posicionamento da badge */
-.dashboard-icons {
+.icon-button{
   position: relative;
+  background: #000;
+  color: #fff;
+  border: none;
+  padding: 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform .15s ease, background .25s ease, box-shadow .25s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,.08);
 }
+.icon-button:hover{ transform: scale(1.05); background:#111; box-shadow: 0 4px 10px rgba(0,0,0,.12); }
+.icon-button:focus-visible{ outline:2px solid #111; outline-offset:2px; }
 
-.icon-button .badge-top {
+.icon-button .badge-top{
   position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 8px;
-  height: 8px;
-  background-color: #ffc107; /* Amarelo */
-  border-radius: 50%;
-  display: none; /* Ative quando necessário */
+  top: -4px; right: -4px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  border-radius: 999px;
+  background: #ffc107; color: #000;
+  font-size: 10px; line-height: 16px; text-align: center;
 }
 
-/* Para mostrar a badge individualmente */
-.icon-button[data-alert="true"] .badge-top {
-  display: block;
-}
-
-
-/* Cartões */
-.dashboard-card {
-  background: #f9f1f4;
+/* ====== Card base ====== */
+.dashboard-card{
+  background: var(--vc-rose-50);
   border-radius: 16px;
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.25rem;
+  box-shadow: var(--vc-shadow);
 }
 
-/* Boas-vindas */
-.welcome-card {
+/* ====== Boas-vindas (carrossel) ====== */
+.welcome-card{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #fdebed;
-}
-
-.welcome-text h3 {
-  font-size: 1.4rem;
-  color: #b4537c;
-  margin-bottom: 0.5rem;
-}
-
-.welcome-text p {
-  font-size: 1rem;
-  margin-bottom: 1rem;
-}
-
-.welcome-button {
-  background-color: #b4537c;
-  color: #fff;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.welcome-image img {
-  width: 100px;
-  border-radius: 10px;
-}
-
-/* Seção “Lembrete do Dia” */
-.reminder-card {
-  background: #ffffff;                                  /* fundo branco puro */
-  border: 2px solid #f8d6e0;                        /* leve contorno rosado */
+  gap: clamp(8px, 2.5vw, 16px);
+  background: var(--vc-rose-50);
+  padding: clamp(14px, 3.2vw, 20px) clamp(16px, 3.8vw, 24px);
   border-radius: 16px;
-  padding: 2rem 1.5rem;
-  margin: 0 auto 2rem;
+  box-shadow: var(--vc-shadow);
+}
+
+.welcome-text h3{
+  font-size: clamp(1rem, 2.9vw, 1.25rem);
+  color:#000;
+  margin:.25rem 0 .5rem;
+  letter-spacing:.1px;
+}
+.welcome-text p{
+  font-size: clamp(.92rem, 2.6vw, 1rem);
+  color:#333;
+  margin:0 0 1rem;
+}
+.welcome-button{
+  background:#000; color:#fff; border:none; border-radius:10px;
+  padding:.55rem 1rem; font-weight:700; letter-spacing:.2px; cursor:pointer;
+}
+
+/* imagem do card */
+.welcome-image{
+  width: clamp(28%, 32vw, 36%);
+  text-align:center;
+  min-width: 84px;
+}
+.welcome-image img{
+  width: 100%;
+  max-width: clamp(100px, 24vw, 140px);
+  border-radius:12px;
+}
+
+/* carrossel */
+.welcome-carousel{
+  width:100%;
+  max-width: 680px;
+  margin:0 auto;
+  position:relative;
+  overflow:hidden;
+  padding-bottom: clamp(10px, 2vw, 14px);
+}
+.carousel-item{ opacity:0; transform: translateY(8px); transition: .45s ease; }
+.carousel-item.active{ opacity:1; transform:none; }
+.carousel-dots{
+  position:absolute; bottom: clamp(8px, 1.8vw, 12px);
+  left:50%; transform:translateX(-50%);
+  display:flex; gap: clamp(4px, 1vw, 8px);
+}
+.dot{ width: clamp(6px,1.6vw,8px); height: clamp(6px,1.6vw,8px); background:#d7d2cf; border-radius:50%; cursor:pointer; }
+.dot.active{ width: clamp(7px,1.9vw,10px); height: clamp(7px,1.9vw,10px); background:#000; }
+
+/* estreitas */
+@media (max-width: 360px){
+  .welcome-card{ align-items: flex-start; }
+  .welcome-text p{ margin-bottom: .75rem; }
+}
+
+/* ====== Lembrete do dia (rosa metálico) ====== */
+section.dashboard-card.reminder-card{
+  background:
+    radial-gradient(140% 100% at -10% -20%,
+      rgba(255,255,255,.65) 0%,
+      rgba(255,255,255,0) 56%),
+    conic-gradient(from 210deg at 65% 0%,
+      rgba(255,255,255,0) 0 10%,
+      rgba(255,255,255,.35) 16%,
+      rgba(255,255,255,0) 26% 52%,
+      rgba(255,255,255,.18) 58%,
+      rgba(255,255,255,0) 72% 100%),
+    linear-gradient(135deg,
+      var(--vc-rose-metal-a) 0%,
+      var(--vc-rose-metal-b) 36%,
+      var(--vc-rose-metal-c) 72%,
+      #e9d9d7 100%),
+    radial-gradient(120% 120% at 110% 110%,
+      rgba(0,0,0,.06) 0%,
+      rgba(0,0,0,0) 60%),
+    repeating-linear-gradient(-12deg,
+      rgba(255,255,255,.06) 0 1px,
+      rgba(255,255,255,0) 1px 6px);
+  background-blend-mode: screen, overlay, normal, multiply, soft-light;
+
+  border-radius: 16px;
+  padding: 20px 16px;
+  margin: 14px auto 22px;
   max-width: 600px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  text-align: center;
   position: relative;
   overflow: hidden;
+
+  border: 1px solid rgba(255,255,255,.75);
+  box-shadow:
+    0 10px 20px rgba(0,0,0,.08),
+    inset 0 1px 0 rgba(255,255,255,.45),
+    inset 0 -1px 0 rgba(0,0,0,.06),
+    var(--vc-shadow);
 }
 
-/* Linha decorativa embaixo do título */
-.reminder-card::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 80%;
-  height: 4px;
-  background: #ed2a64;
-  transform: translateX(-50%);
+/* brilho diagonal */
+section.dashboard-card.reminder-card::before{
+  content:"";
+  position:absolute; top:-20%; right:-20%; bottom:-20%; left:-20%;
+  background: linear-gradient(140deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,.35) 18%,
+    rgba(255,255,255,0) 36%);
+  mix-blend-mode: soft-light;
+  pointer-events:none;
 }
 
-/* Título */
-.reminder-card h4 {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #b4537c;
-  margin-bottom: 1rem;
-  position: relative;
-  z-index: 1;
+/* micro-bisel premium */
+section.dashboard-card.reminder-card::after{
+  content:"";
+  position:absolute; inset:0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.35),
+    inset 0 20px 40px rgba(255,255,255,.04);
+  pointer-events:none;
 }
 
-/* Caixa interna do texto */
-/* === Card de lembrete === */
-.reminder-card {
-  /* gradiente rosado metálico */
-  background: linear-gradient(135deg, #e70987 0%, #ed6889 100%);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  margin: 1rem 0;
-  width: 100%;
+section.dashboard-card.reminder-card > h4{
+  margin:0 0 10px;
+  font-size:1.02rem; letter-spacing:.3px;
+  font-weight:900; color:#111; text-transform:uppercase;
 }
-
-/* Título “LEMBRETE DO DIA:” */
-.reminder-card > h4 {
-  margin: 0;
-  padding: 1rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #4a2a34;
-  background: rgba(255,255,255,0.2);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Tabela que segura a mensagem */
-.reminder-card .reminder-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: transparent; /* já vem do card */
-  margin: 0;
-}
-
-/* Células da tabela */
-.reminder-card .reminder-table td {
-  padding: 1.2rem;
-  text-align: center;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #131212;
-  line-height: 1.4;
-}
-
-/* Brilho sutil no card */
-.reminder-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  border-radius: 16px;
-  background: radial-gradient(circle at top left,
-    rgba(166, 3, 90, 0.845), transparent 60%);
-  pointer-events: none;
-}
-
-
-/* Texto do lembrete */
-.reminder-table td {
-  font-size: 1rem;
-  color: #333;
-  line-height: 1.6;
-  text-align: center;
+.reminder-table{ display:inline-table; margin:0 auto; border-collapse:collapse; }
+.reminder-table td{
+  padding: 2px 0 6px;
+  font-size: .98rem; font-weight:600; color:#111; line-height:1.45;
   white-space: pre-wrap;
 }
 
+/* ====== Linha Progresso + Eventos ====== */
+.dashboard-row{ display:flex; flex-wrap:wrap; gap:12px; }
 
-/* Linha com progresso + eventos */
-.dashboard-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
+/* ---- Progresso (anel dourado) ---- */
+.progress-card{
+  flex:1;
+  min-width:160px;
+  background: var(--vc-rose-25);
+  border-radius:16px;
+  box-shadow: var(--vc-shadow);
+  display:flex; align-items:center; justify-content:center;
+  padding:12px;
 }
 
-/* Progresso */
-.progress-card {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #fed2e0;
+.circle-progress{ position:relative; width:128px; height:128px; }
+.circular-chart{
+  display:block; width:128px; height:128px;
+  transform:rotate(-90deg); /* inicia no topo */
+  overflow:visible;
+
+  /* propriedades para controlar o progresso sem JS extra */
+  --size: 128;
+  --stroke: 12;
+  --radius: 56; /* ~ (size - stroke)/2, calibrado no mock */
+  --circumference: calc(2 * 3.1415926535 * var(--radius));
+  --progress: .45; /* 45% ~ arco do print */
 }
 
-.circle-progress {
-  position: relative;
-  width: 120px;
-  height: 120px;
+/* disco branco interno */
+.disk{ fill:#fff; }
+
+/* aro branco de fundo */
+.ring-bg{
+  fill:none;
+  stroke:#fff;
+  stroke-width:12;
+  opacity:.98;
 }
 
-.circular-chart {
-  display: block;
-  max-width: 100%;
-  transform: rotate(-90deg);
+/* arco dourado com brilho esmaltado */
+.ring{
+  fill:none;
+  stroke: var(--vc-gold);
+  stroke-width:12;
+  stroke-linecap:round;
+  filter:
+    drop-shadow(0 0 1px rgba(255,255,255,.45))
+    drop-shadow(0 2px 3px rgba(0,0,0,.12));
+  stroke-dasharray: var(--circumference);
+  stroke-dashoffset: calc(var(--circumference) * (1 - var(--progress)));
+  transition: stroke-dashoffset .6s ease;
 }
 
-.circle-bg {
-  fill: none;
-  stroke: #eee;
-  stroke-width: 3.8;
+/* texto central */
+.progress-text{
+  position:absolute; inset:0;
+  display:grid; place-items:center;
+  text-align:center; color:#141313;
+}
+.progress-kg{
+  font-size:1.08rem;
+  font-weight:800;
+  letter-spacing:.1px;
+  line-height:1;
+}
+.progress-kg span{
+  font-size:.9rem;
+  font-weight:700;
+  color:#141313;
+}
+.progress-sub{
+  font-size:.9rem;
+  color:#141313;
+  margin-top:2px;
+  text-align:center;
 }
 
-.circle {
-  fill: none;
-  stroke: #d0a20e; /* roxo suave */
-  stroke-width: 3.8;
-  stroke-linecap: round;
-  animation: progress 1s ease-out forwards;
+/* ---- Próximos eventos (exatamente como no print) ---- */
+.events-card{
+  flex:1; min-width:160px; max-width:300px;
+  background: var(--vc-rose-100);
+  padding:12px;
+  border-radius:16px;
+  box-shadow: var(--vc-shadow);
+}
+.events-card h4{
+  margin:0 0 10px;
+  font-size:.95rem;
+  font-weight:800;
+  color:#111;
+}
+.events-list{ display:flex; flex-direction:column; gap:6px; }
+
+.event-row{ display:flex; }
+
+/* caixinha da data (58px como no print) */
+.event-date{
+  flex:0 0 58px;
+  background:#fff;
+  border:1px solid var(--vc-border);
+  border-right:none;
+  border-top-left-radius:12px;
+  border-bottom-left-radius:12px;
+  text-align:center;
+  padding:8px 0;
+  font-size:.9rem;
+  font-weight:700;
+  color:#333;
+  line-height:1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
 }
 
-@keyframes progress {
-  0% {
-    stroke-dasharray: 0, 100;
-  }
-  100% {
-    stroke-dasharray: 25, 100; /* 25% do círculo */
-  }
+/* caixinha do título */
+.event-name{
+  flex:1;
+  background:#fff;
+  border:1px solid var(--vc-border);
+  border-left:none;
+  border-top-right-radius:12px;
+  border-bottom-right-radius:12px;
+  padding:8px 12px;
+  font-size:.9rem;
+  font-weight:600;
+  color:#333;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
 }
 
-.progress-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  font-weight: 600;
-  font-size: 1rem;
-  color: #b4537c;
+/* linha “+ 1 evento” com mesma espessura/bisel */
+.event-row.event-more{
+  justify-content:center; align-items:center;
+  background:#fff;
+  border:1px solid var(--vc-border);
+  border-radius:12px;
+  font-weight:600;
+  color:#333;
+  padding:8px 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
 }
 
-/* Eventos */
-.events-card {
-  flex: 1;
-  background: #fdf2f8;
+.event-empty{ color:#666; }
+
+/* ====== Logout ====== */
+.dashboard-logout{ text-align:center; margin-top: 1.6rem; }
+.logout-button{
+  background:#f87171; color:#fff; border:none; border-radius:10px;
+  padding:.6rem 1.3rem; font-weight:800; cursor:pointer;
+  transition: background .25s ease;
+}
+.logout-button:hover{ background:#ef4444; }
+
+/* ====== Responsivo ====== */
+@media (max-width:390px){
+  .circle-progress{ width: 120px; height: 120px; }
+  .circular-chart{ width: 120px; height: 120px; --radius: 54; }
+  .progress-kg{ font-size: 1.04rem; }
+  .progress-sub{ font-size: .88rem; }
+}
+@media (max-width:768px){
+  .dashboard-row{ flex-direction:row; }
+  .welcome-card{ flex-direction:column; text-align:center; }
+  .welcome-image{ margin-top:1rem; }
+  .welcome-carousel{ max-width:90%; }
 }
 
-.events-card h4 {
-  margin-bottom: 0.8rem;
-  color: #b4537c;
+/* ===========================
+   MODAL (Grupos/Alertas/Mensagens)
+   =========================== */
+
+:root {
+  --dash-accent: #caa55a;   /* o mesmo dourado do dashboard */
+  --dash-bg: #ffffff;
+  --dash-border: #ececec;
+  --dash-text: #1f2937;
+  --dash-sub: #6b7280;
 }
 
-.events-card ul {
-  list-style: none;
-  padding: 0;
+/* backdrop */
+.dash-panel {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  animation: dashFadeIn 160ms ease-out;
 }
 
-.events-card li {
-  font-size: 0.95rem;
-  margin-bottom: 0.5rem;
-}
-
-.events-card a {
-  text-decoration: none;
-  color: #9b2c69;
-  font-weight: 500;
-}
-
-/* Botão de logout */
-.dashboard-logout {
-  text-align: center;
-  margin-top: 2rem;
-}
-
-.logout-button {
-  background-color: #f87171;
-  color: white;
-  padding: 0.6rem 1.4rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.3s ease;
-}
-
-.logout-button:hover {
-  background-color: #ef4444;
-}
-
-/* Responsivo */
-@media (max-width: 768px) {
-  .dashboard-row {
-    flex-direction: column;
-  }
-
-  .welcome-card {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .welcome-image {
-    margin-top: 1rem;
-  }
-}
-.welcome-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #fdebed;
-  padding: 1.5rem;
+/* caixa do modal */
+.dash-panel-box {
+  width: min(92vw, 560px);
+  max-height: min(82vh, 760px);
+  background: var(--dash-bg);
+  border: 1px solid var(--dash-border);
   border-radius: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  margin-bottom: 1.5rem;
-}
-
-/* Carrossel: contêiner fluido */
-.welcome-carousel {
-  width: 100%;
-  max-width: 65%;
-  margin: 0 auto;
-  position: relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.14);
   overflow: hidden;
-  position: relative;
-}
-
-/* Itens: suaviza transição */
-.carousel-item {
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
-  transform: translateY(10px);
-}
-
-.carousel-item.active {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Pontinhos discretos e responsivos */
-.carousel-dots {
-  position: absolute;
-  bottom: 1rem;           /* afasta um pouco do conteúdo */
-  left: 50%;              /* posiciona no meio horizontal */
-  transform: translateX(-50%);
-  display: flex;
-  gap: 0.5rem;
-  width: auto;
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  background: #ddd;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background 0.3s, transform 0.3s;
-}
-
-.dot:hover {
-  background: #ccc;
-  transform: scale(1.2);
-}
-
-.dot.active {
-  width: 8px;
-  height: 8px;
-  background: #b4537c;
-}
-
-/* Mobile: ocupa 90% da largura, dots embaixo do card */
-@media (max-width: 768px) {
-  .welcome-carousel {
-    max-width: 90%;
-  }
-
-  .carousel-dots {
-    margin-top: 0.5rem;
-    gap: 0.4rem;
-  }
-
-
-  .dot {
-    width: 5px;
-    height: 5px;
-  }
-
-  .dot.active {
-    width: 7px;
-    height: 7px;
-  }
-}
-
-.welcome-image {
-  width: 30%;
-  text-align: center;
-}
-
-.welcome-image img {
-  width: 100%;
-  max-width: 120px;
-  border-radius: 12px;
-}
-/* Estilização da seção “Lembrete do Dia” */
-.reminder-card {
-  background: linear-gradient(to right, #fbe3ea, #fdf4f7);
-  border-radius: 16px;
-  padding: 1.5rem;
-  text-align: center;
-  margin: 0 auto 1.5rem;
-  max-width: 600px;
-}
-
-.reminder-card h4 {
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: #b4537c;
-  margin-bottom: 0.75rem;
-}
-
-.reminder-table {
-  margin: 0 auto;
-  display: inline-block;
-  width: auto;
-}
-
-.reminder-table td {
-  font-size: 1rem;
-  color: #555;
-  padding: 0.5rem 1rem;
-  line-height: 1.4;
-}
-/* === Override total do “Lembrete do Dia” === */
-section.dashboard-card.reminder-card {
-  /* mesmo gradiente / tom rosa do mock */
-  background: linear-gradient(135deg, #fdebed 0%, #fdebed 100%) !important;
-  border-radius: 16px !important;
-  padding: 24px 16px !important;
-  margin: 16px auto 24px !important;
-  max-width: 600px !important;
-  text-align: center !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-
-/* Título “LEMBRETE DO DIA:” */
-section.dashboard-card.reminder-card > h4 {
-  margin: 0 0 16px !important;
-  padding: 0 !important;
-  font-size: 1.2rem !important;
-  font-weight: 700 !important;
-  color: #333333 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.5px !important;
-}
-
-/* Container da mensagem */
-section.dashboard-card.reminder-card .reminder-table {
-  display: inline-table !important;
-  margin: 0 auto !important;
-  width: auto !important;
-  background: transparent !important;
-  border-collapse: collapse !important;
-}
-
-/* Texto do lembrete */
-section.dashboard-card.reminder-card .reminder-table td {
-  padding: 0 !important;
-  font-size: 1rem !important;
-  font-weight: 500 !important;
-  color: #333333 !important;
-  line-height: 1.4 !important;
-  white-space: pre-wrap !important;
-}
-/* === Eventos: layout de duas colunas + “+1 evento” === */
-.events-card {
-  background: #f47eb975;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  max-width: 300px;        /* ajuste conforme seu grid */
-  margin: 0;
-}
-
-.events-card h4 {
-  margin: 0 0 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #000000;
-}
-
-.events-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  animation: dashSlideUp 180ms ease-out;
 }
 
-.event-row {
+/* header do modal */
+.dash-panel-header {
+  position: sticky;
+  top: 0;
   display: flex;
-}
-
-/* Célula de data */
-.event-date {
-  flex: 0 0 64px;          /* largura fixa */
-  padding: 8px 0;
-  background: #ffffff;
-  border: 1px solid #e5e5e5;
-  border-right: none;
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
-  text-align: center;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #333333;
-}
-
-/* Célula de nome do evento */
-.event-name {
-  flex: 1;
-  padding: 8px 12px;
-  background: #ffffff;
-  border: 1px solid #e5e5e5;
-  border-left: none;
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #333333;
-}
-
-/* Linha “+1 evento” */
-.event-more {
-  display: flex;
-  justify-content: center;
   align-items: center;
-  padding: 8px 0;
-  background: #ffffff;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #333333;
-  cursor: default;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #ffffff, #fafafa);
+  border-bottom: 1px solid var(--dash-border);
 }
+
+.dash-panel-header strong {
+  font-size: 1.05rem;
+  color: var(--dash-text);
+  letter-spacing: 0.2px;
+}
+
+/* botão fechar do modal (apenas dentro do modal) */
+.dash-panel .dash-panel-close {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 20px;
+  line-height: 1;
+  color: #6b7280;
+  cursor: pointer;
+}
+.dash-panel .dash-panel-close:hover { background: rgba(0,0,0,0.06); color: #374151; }
+.dash-panel .dash-panel-close:focus-visible { outline: 2px solid var(--dash-accent); outline-offset: 2px; }
+
+/* corpo rolável */
+.dash-panel-body {
+  overflow: auto;
+  padding: 10px 12px 14px;
+}
+
+/* bloco de item */
+.dash-item {
+  position: relative;
+  border: 1px solid var(--dash-border);
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 8px 6px;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+/* filete lateral de destaque */
+.dash-item::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 4px;
+  background: var(--dash-accent);
+  opacity: 0.9;
+}
+
+.dash-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.08);
+  border-color: #e8e8e8;
+}
+
+/* título e subtítulo do item */
+.dash-item-title {
+  color: var(--dash-text);
+  font-weight: 600;
+  font-size: 0.98rem;
+  line-height: 1.3;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.dash-item-sub {
+  color: var(--dash-sub);
+  font-size: 0.88rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* estado vazio */
+.dash-empty {
+  text-align: center;
+  color: #9ca3af;
+  padding: 22px 10px;
+  font-size: 0.95rem;
+}
+
+/* scrollbar suave só dentro do modal */
+.dash-panel-body::-webkit-scrollbar { width: 10px; }
+.dash-panel-body::-webkit-scrollbar-track { background: #fafafa; border-radius: 10px; }
+.dash-panel-body::-webkit-scrollbar-thumb { background: #d8d8d8; border-radius: 10px; }
+.dash-panel-body::-webkit-scrollbar-thumb:hover { background: #c9c9c9; }
+
+/* animações */
+@keyframes dashFadeIn {
+  from { opacity: 0; } to { opacity: 1; }
+}
+@keyframes dashSlideUp {
+  from { transform: translateY(8px); opacity: 0.96; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+/* responsivo */
+@media (max-width: 520px) {
+  .dash-panel-box { width: 94vw; max-height: 86vh; }
+  .dash-item { margin: 8px 0; }
+  .dash-panel-header { padding: 12px 14px; }
+}
+
+/* Acessibilidade/OS: respeita quem prefere menos animação */
+@media (prefers-reduced-motion: reduce){
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ===========================
+   Barra inferior (tabs) — como no mock
+   =========================== */
+.bottom-nav{
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: #fff;
+  border-top: 1px solid #eee;
+  display: grid;
+  grid-template-columns: 1fr 1fr auto 1fr 1fr;
+  align-items: center;
+  padding: 8px 14px env(safe-area-inset-bottom);
+  z-index: 999;
+}
+
+.bottom-nav__item{
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  font-size:.75rem; color:#8b8b8b; text-decoration:none;
+}
+.bottom-nav__item svg, .bottom-nav__item i{ font-size:20px; line-height:1; }
+.bottom-nav__item--active{ color:#d7b4af; } /* rosé ativo do mock */
+
+.bottom-nav__fab{
+  position:relative;
+  width:54px; height:54px; border-radius:50%;
+  background:#e9c9c1;
+  display:grid; place-items:center;
+  margin: -22px auto 0;
+  box-shadow: 0 8px 16px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.8);
+}
+.bottom-nav__fab::after{
+  content:""; position:absolute; inset:0; border-radius:inherit;
+  background: radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,.65), rgba(255,255,255,0) 60%);
+  mix-blend-mode: screen; pointer-events:none;
+}
+.bottom-nav__fab i, .bottom-nav__fab svg{ color:#fff; font-size:22px; }
+
+/* espaçamento do conteúdo para não ficar sob a barra */
+.has-bottom-nav { padding-bottom: 84px; }
+
+/* =========================================================
+   OVERRIDES PARA FICAR 1:1 COM O MOCK (sem quebrar nada)
+   ========================================================= */
+
+/* Ícones do topo “ghost” (sem cápsula) */
+.icon-button--ghost{
+  background: transparent !important;
+  color: #111 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: 26px; height: 26px;
+  border-radius: 0;
+  display: grid; place-items: center;
+  transform: none !important;
+}
+.icon-button--ghost:hover{ opacity: .85; }
+
+/* Dots do carrossel alinhados à esquerda, logo abaixo do texto */
+.welcome-carousel{ padding-bottom: 0 !important; }
+.carousel-dots{
+  position: static !important;
+  left: auto !important;
+  transform: none !important;
+  margin-top: 8px !important;
+  justify-content: flex-start !important;
+}
+.dot{ width: 6px !important; height: 6px !important; background: #d9d4d2 !important; border-radius: 999px; }
+.dot.active{ width: 7px !important; height: 7px !important; background: #111 !important; }
+
+/* Botão do carrossel levemente mais compacto como no mock */
+.welcome-button{ padding: .5rem .9rem; font-weight: 800; }
+
+/* Calibração do arco dourado (cor e brilho) */
+.ring{
+  stroke: var(--vc-gold) !important;
+  stroke-width: 12 !important;
+  filter:
+    drop-shadow(0 0 1px rgba(255,255,255,.45))
+    drop-shadow(0 2px 3px rgba(0,0,0,.10));
+}
+
+/* Chips dos eventos — altura/tipografia iguais ao print */
+.event-date{ padding: 9px 0 8px; font-size: .88rem; }
+.event-name{ padding: 9px 12px 8px; font-size: .88rem; }
+.event-row.event-more{ padding: 9px 0 8px; font-size: .9rem; }
+
+/* Título levemente mais compacto */
+.dashboard-top h2{ font-size: 1.125rem; letter-spacing: .1px; }

@@ -496,3 +496,40 @@
   .notes-icon-row { gap: 6px; }
   .notes-icon-btn { width: 44px; height: 44px; } /* ainda melhor pra dedo */
 }
+/* ===== FIX: estados dos ícones (VideoLessons) ===== */
+
+/* Garante que este componente use o accent dourado, mesmo se Video.css definir outro */
+.vl-container { --accent: #d98e2d; }
+
+.vl-lesson-icons .vl-icon-btn {
+  opacity: .85;
+  transition: transform var(--transition), opacity var(--transition), color var(--transition);
+}
+
+.vl-lesson-icons .vl-icon-btn:hover {
+  opacity: 1;
+  transform: scale(1.06);
+}
+
+.vl-lesson-icons .vl-icon-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Quando favorito/curtida estiverem ATIVOS */
+.vl-lesson-icons .vl-icon-btn.active svg {
+  color: var(--accent);
+  opacity: 1;
+}
+
+/* Inativos (apenas não “completed”) ficam mais discretos */
+.vl-lesson-icons .vl-icon-btn:not(.active):not(.completed) svg {
+  opacity: .6;
+}
+
+/* Concluído ativo já tinha regra, reforçamos um leve fundo */
+.vl-lesson-icons .vl-icon-btn.completed.active {
+  background: rgba(217,142,45,0.15);
+  border-radius: 999px;
+}

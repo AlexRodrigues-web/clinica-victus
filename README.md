@@ -207,7 +207,7 @@ Tabelas principais:
 
 ## Autor
 Desenvolvido por **Alex**  
-Email: **alex@victus.com**  
+Email: **alexrroliver200@gmail.com**  
 Portfólio: **alexdevcode.com**
 
 > Este projeto faz parte de uma avaliação técnica para a Victus. Estruturado de forma modular, segura e escalável, com foco em usabilidade e clareza de código.

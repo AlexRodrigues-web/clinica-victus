@@ -82,6 +82,21 @@ export default function Dashboard() {
     return () => clearInterval(t);
   }, [destaques]);
 
+  // ================== FIX: helpers p/ persistir e limpar badges ==================
+  const persistCounts = (next) => {
+    try { localStorage.setItem(LS.counts(usuarioId), JSON.stringify(next)); } catch {}
+  };
+
+  const clearPanelCount = (type) => {
+    if (!type) return;
+    setCounts(prev => {
+      const next = { ...prev, [type]: 0 };
+      persistCounts(next); // FIX: persiste zerado
+      return next;
+    });
+  };
+  // ==============================================================================
+
   // ================== LOADERS ==================
   useEffect(() => {
     if (!usuarioId) return;
@@ -176,7 +191,7 @@ export default function Dashboard() {
           mensagens: Number(base?.mensagens ?? 0),
         };
         setCounts(next);
-        try { localStorage.setItem(LS.counts(usuarioId), JSON.stringify(next)); } catch {}
+        persistCounts(next);
       } else {
         try {
           const raw = localStorage.getItem(LS.counts(usuarioId));
@@ -271,15 +286,44 @@ export default function Dashboard() {
           <h2>Olá, <span>{usuario?.nome || 'Usuário'}</span></h2>
 
           <div className="dashboard-icons">
-            <button className="icon-button icon-button--ghost" onClick={() => setOpenPanel(openPanel === 'grupos' ? null : 'grupos')} aria-label="Grupos">
+            {/* FIX: zera badge ao abrir */}
+            <button
+              className="icon-button icon-button--ghost"
+              onClick={() => {
+                const next = openPanel === 'grupos' ? null : 'grupos';
+                setOpenPanel(next);
+                if (next === 'grupos' && counts.grupos > 0) clearPanelCount('grupos');
+              }}
+              aria-label="Grupos"
+            >
               <FiUsers size={20} />
               {counts.grupos > 0 && <span className="badge-top">{counts.grupos}</span>}
             </button>
-            <button className="icon-button icon-button--ghost" onClick={() => setOpenPanel(openPanel === 'alertas' ? null : 'alertas')} aria-label="Lembretes/alertas">
+
+            {/* FIX: zera badge ao abrir */}
+            <button
+              className="icon-button icon-button--ghost"
+              onClick={() => {
+                const next = openPanel === 'alertas' ? null : 'alertas';
+                setOpenPanel(next);
+                if (next === 'alertas' && counts.alertas > 0) clearPanelCount('alertas');
+              }}
+              aria-label="Lembretes/alertas"
+            >
               <FiBell size={20} />
               {counts.alertas > 0 && <span className="badge-top">{counts.alertas}</span>}
             </button>
-            <button className="icon-button icon-button--ghost" onClick={() => setOpenPanel(openPanel === 'mensagens' ? null : 'mensagens')} aria-label="Mensagens">
+
+            {/* FIX: zera badge ao abrir */}
+            <button
+              className="icon-button icon-button--ghost"
+              onClick={() => {
+                const next = openPanel === 'mensagens' ? null : 'mensagens';
+                setOpenPanel(next);
+                if (next === 'mensagens' && counts.mensagens > 0) clearPanelCount('mensagens');
+              }}
+              aria-label="Mensagens"
+            >
               <FiMessageSquare size={20} />
               {counts.mensagens > 0 && <span className="badge-top">{counts.mensagens}</span>}
             </button>

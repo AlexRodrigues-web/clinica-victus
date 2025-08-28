@@ -1,9 +1,36 @@
-# Garante que o cabeçalho Authorization seja repassado ao PHP
+# ==========================================
+# Clinica Victus — BACKEND/.htaccess (API)
+# Requisitos: Apache mod_rewrite + AllowOverride All
+# Compatível com XAMPP/WAMP/MAMP (Windows/macOS/Linux)
+# ==========================================
+
+# Evita que o Apache tente "adivinhar" arquivos (quebra rotas limpas)
+Options -MultiViews
+# Evita listar diretórios
+Options -Indexes
+
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteCond %{HTTP:Authorization} .
-    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  RewriteEngine On
+
+  # --- Preserva o header Authorization para PHP (Bearer/Basic etc.) ---
+  RewriteCond %{HTTP:Authorization} .
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+  # --- Bloqueia acesso direto a áreas sensíveis ---
+  RewriteRule ^(?:config|controllers|models|routes|storage|tests?|\.git)/ - [F,L]
+
+  # --- Deixa arquivos reais passarem (uploads, assets, etc.) ---
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # --- Roteamento bonito ---
+  # /backend/               -> index.php
+  # /backend/login          -> index.php?rota=login
+  # /backend/perfil/123     -> index.php?rota=perfil/123
+  RewriteRule ^$ index.php [QSA,L]
+  RewriteRule ^(.+)$ index.php?rota=$1 [QSA,L]
 </IfModule>
 
-# Alternativa para SetEnvIf
+# Fallback para alguns ambientes FastCGI que não propagam Authorization
 SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1

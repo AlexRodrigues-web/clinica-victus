@@ -98,11 +98,19 @@ function get_pdo_from_project(): PDO {
 /* =========================
  * Captura e normaliza rota
  * ========================= */
-$rota = $_GET['rota'] ?? null;
-if (!$rota) json_bad('Rota não especificada');
-
-$rota = trim($rota);
+$rotaRaw = $_GET['rota'] ?? '';
+$rota = trim($rotaRaw);
 $rota = trim($rota, "/ \t\n\r\0\x0B");
+
+/* Healthcheck para rota vazia (evita parecer erro) */
+if ($rota === '') {
+    json_ok([
+        'status'  => 'ok',
+        'service' => 'Victus API',
+        'time'    => date('c')
+    ]);
+}
+
 $partes     = array_values(array_filter(explode('/', $rota)));
 $resource   = strtolower($partes[0] ?? '');
 $parametros = array_slice($partes, 1);
@@ -113,6 +121,17 @@ error_log("index.php - Rota solicitada: {$resource} | Params: " . implode(',', $
  * ROTAS CRÍTICAS (com fallback)
  * ========================= */
 switch ($resource) {
+
+    /* -------------------------
+     * HEALTHCHECK
+     * ------------------------- */
+    case 'health': {
+        json_ok([
+            'status'  => 'ok',
+            'service' => 'Victus API',
+            'time'    => date('c')
+        ]);
+    }
 
     /* -------------------------
      * LOGIN (encaminha direto)
@@ -131,17 +150,17 @@ switch ($resource) {
     /* -------------------------
      * SENHA (recuperar/redefinir)
      * ------------------------- */
-   case 'senha': {
-  $arquivoRota = __DIR__ . '/routes/senha.php';
-  if (is_file($arquivoRota)) {
-    $GLOBALS['rotas_parametros'] = $parametros; // ex.: ['recuperar'] ou ['redefinir']
-    require_once $arquivoRota;
-    exit;
-  }
-  http_response_code(404);
-  echo json_encode(['erro'=>'Rota senha não encontrada']);
-  exit;
-}
+    case 'senha': {
+        $arquivoRota = __DIR__ . '/routes/senha.php';
+        if (is_file($arquivoRota)) {
+            $GLOBALS['rotas_parametros'] = $parametros; // ex.: ['recuperar'] ou ['redefinir']
+            require_once $arquivoRota;
+            exit;
+        }
+        http_response_code(404);
+        echo json_encode(['erro'=>'Rota senha não encontrada']);
+        exit;
+    }
 
     /* -------------------------
      * PERFIL
@@ -344,7 +363,7 @@ switch ($resource) {
         if (count($parametros) >= 2 && strtolower($parametros[0]) === 'listar') {
             if ($ok && $temClasse) {
                 try { (new NotificacoesController())->listar((int)$parametros[1]); exit; }
-                catch (Throwable $e) { error_log("fallback /notificacoes/listar: ".$e->getMessage()); fb_notif_listar(); }
+                catch (Throwable $e) { error_log("fallback /notificacoes/listar: ".$e->Message()); fb_notif_listar(); }
             } else { fb_notif_listar(); }
         }
 

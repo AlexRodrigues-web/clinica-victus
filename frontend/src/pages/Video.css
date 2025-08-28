@@ -1,5 +1,8 @@
 /* Video.css */
 
+/* Desliga DOM da tela de vídeo quando estou em Aulas */
+body.on-aulas .video-page { display: none !important; }
+
 /* Variáveis de cor */
 :root {
   --bg: #000000;
@@ -20,60 +23,54 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-bottom: 60px; /* espaço para footer */
+  padding-bottom: 60px; /* espaço para footer fixo */
 }
 
-/* Header */
+/* =========================
+   HEADER (centralizado)
+   ========================= */
 .video-header {
   position: relative;
   display: flex;
-  justify-content: center; /* mantém o conteúdo centralizado */
+  justify-content: center;   /* mantém o conteúdo centralizado */
   align-items: flex-start;
-  padding: 16px 0 0;       /* só padding‑top para empurrar o header-body pra baixo */
-  background: var(--bg);
-  height: 88px;
-}
-
-/* Botão “voltar” */
-/* Video.css */
-
-/* Header */
-.video-header {
-  position: relative;
-  display: flex;
-  justify-content: center;  /* mantém o conteúdo centralizado */
-  align-items: flex-start;
-  padding-top: 16px;        /* empurra o body pra baixo */
+  padding-top: 16px;         /* empurra o body pra baixo */
   height: 88px;
   background: var(--bg);
 }
 
-/* Botão de voltar – só a seta, canto esquerdo */
+/* Botão de voltar – sempre centralizado verticalmente no header */
 .header-back-btn {
   position: absolute;
-  top: 16px;
   left: 16px;
-  display: inline-flex;     /* só o tamanho do conteúdo */
+  top: 50%;
+  transform: translateY(-50%);
+  -webkit-transform: translateY(-50%); /* iOS */
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: auto;              /* nunca expande */
-  padding: 4px;             /* área de clique mínima */
+  width: 40px;
+  height: 40px;              /* alvo de toque consistente */
+  padding: 0;
   background: none;
   border: none;
-  font-size: 1.5rem;
   color: var(--text);
+  font-size: 1.5rem;
+  line-height: 0;            /* evita empurrar pelo baseline */
   cursor: pointer;
   z-index: 10;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Mantém o header-body centrado */
+/* Mantém o header-body centrado e evita colisão com a seta */
 .header-body {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  padding: 0 56px;           /* reserva espaço p/ a seta nos lados */
+  text-align: center;
 }
-
 
 /* título do curso */
 .header-title {
@@ -81,10 +78,14 @@
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--text);
-  line-height: 1;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
-/* subtítulo (nome da aula) */
+/* subtítulo (se usar) */
 .header-subtitle {
   margin: 0;
   font-size: 0.9rem;
@@ -96,50 +97,48 @@
   text-overflow: ellipsis;
 }
 
-/* layout da barra de progresso + percent */
+/* barra de progresso no header (opcional) */
 .header-progress-row {
   display: flex;
   align-items: center;
-  margin-top: 8px;     /* espaço entre subtítulo e progresso */
+  margin-top: 8px;
   gap: 8px;
 }
-
-/* track branca da barra */
 .header-progress {
-  width: 200px;        /* ajuste conforme necessário */
+  width: 200px;
   height: 4px;
   background: #FFFFFF;
   border-radius: 2px;
   overflow: hidden;
 }
-
-/* fill da barra */
 .header-bar {
   width: 0;            /* injeta via inline style */
   height: 100%;
   background: var(--accent);
   transition: width 0.3s ease;
 }
-
-/* percent ao lado */
 .header-percent {
   font-size: 0.8rem;
   color: var(--text);
   white-space: nowrap;
 }
 
-/* Player & overlay */
+/* =========================
+   PLAYER
+   ========================= */
 .video-player {
   position: relative;
   width: 100%;
   padding-top: 56.25%;
   background: #111111;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 10px;          /* respiro do header */
 }
 
 .video-overlay {
   position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,73 +152,126 @@
   width: 100%; height: 100%;
 }
 
+/* ===== PROGRESSO REAL ABAIXO DO PLAYER (Video.jsx) ===== */
+.video-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 0;
+}
+.video-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: #ffffff;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.video-progress-fill {
+  height: 100%;
+  width: 0%;                 /* injeta via style */
+  background: var(--accent);
+  transition: width .35s ease;
+}
+.video-progress-text {
+  font-size: .8rem;
+  color: var(--text);
+  min-width: 42px;
+  text-align: right;
+}
+
 /* Fallback */
 .embed-fallback {
   text-align: center;
   padding: 0.5rem;
   color: var(--subtext);
 }
+.embed-fallback a { color: var(--accent); }
 
-.embed-fallback a {
-  color: var(--accent);
-}
+/* =========================
+   META / AÇÕES (abaixo do player)
+   ========================= */
+.video-info { padding: 1rem; }
 
-/* Meta & ações */
-.video-info {
-  padding: 1rem;
-}
-
-.video-meta {
+/* bloco com título à esquerda e ícones à direita */
+.intro-section {
   display: flex;
-  align-items: center;
-  margin-bottom: 0.5rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.video-meta h3 {
+.intro-text { flex: 1; min-width: 0; }
+
+.intro-title {
+  margin: 0 0 6px 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text);
+}
+
+.intro-description {
   margin: 0;
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
-.video-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 1rem;
-}
-
-.video-actions .action-icon {
-  font-size: 1.2rem;
-  color: var(--footer-icon);
-}
-
-.video-actions .action-icon.completed {
-  color: var(--accent);
-}
-
-.video-description {
-  margin: 0.5rem 0 0;
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: .88rem;
+  line-height: 1.45;
   color: var(--subtext);
 }
 
-/* Próxima aula */
+/* ícones de ação (estrela, coração, concluído) */
+.action-icons {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.icon-btn {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  background: transparent;   /* sem “ripple” rosa */
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.icon-btn svg { font-size: 18px; color: #fff; opacity: .9; }
+
+/* remove qualquer highlight feio ao clicar/focar */
+.icon-btn:not(.completed):active,
+.icon-btn:not(.completed):focus {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.icon-btn:active { transform: scale(0.96); } /* feedback sutil */
+
+/* somente o concluído tem pílula rosa permanente */
+.icon-btn.completed {
+  background: var(--accent);
+  color: #000;
+}
+.icon-btn.completed svg {
+  color: #000;
+  opacity: 1;
+}
+
+/* =========================
+   PÍLULA “Próxima aula” (se usar aqui)
+   ========================= */
 .next-lesson-pill {
   background: var(--card-bg);
   margin: 0.5rem 1rem;
-  border-radius: 6px;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.8rem;
+  padding: 0.8rem 1rem;
   border: 1px solid var(--border);
 }
-
 .next-lesson-pill span {
   color: var(--subtext);
   font-size: 0.8rem;
 }
-
 .next-lesson-pill button {
   background: none;
   border: none;
@@ -231,16 +283,15 @@
   gap: 0.4rem;
   cursor: pointer;
 }
-
 .next-lesson-pill button svg {
   color: var(--accent);
   font-size: 1.2rem;
 }
 
-/* Accordion de módulos */
-.accordion-item {
-  margin: 0 1rem 1rem;
-}
+/* =========================
+   ACCORDION (seções/módulos) – caso use nesta tela
+   ========================= */
+.accordion-item { margin: 0 1rem 1rem; }
 
 .accordion-header {
   width: 100%;
@@ -255,11 +306,7 @@
   align-items: center;
   cursor: pointer;
 }
-
-.accordion-body {
-  margin-top: 0.5rem;
-  padding-left: 1rem;
-}
+.accordion-body { margin-top: 0.5rem; padding-left: 1rem; }
 
 /* Botões de aula */
 .lesson-button {
@@ -274,30 +321,15 @@
   color: var(--subtext);
   cursor: pointer;
 }
+.lesson-button svg { margin-right: 0.5rem; font-size: 1rem; }
+.lesson-button.locked { opacity: 0.6; cursor: not-allowed; }
+.lesson-button.locked svg { color: var(--footer-icon); }
+.lesson-button:not(.locked) { color: var(--text); }
+.lesson-button:not(.locked) svg { color: var(--accent); }
 
-.lesson-button svg {
-  margin-right: 0.5rem;
-  font-size: 1rem;
-}
-
-.lesson-button.locked {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.lesson-button.locked svg {
-  color: var(--footer-icon);
-}
-
-.lesson-button:not(.locked) {
-  color: var(--text);
-}
-
-.lesson-button:not(.locked) svg {
-  color: var(--accent);
-}
-
-/* Footer fixo */
+/* =========================
+   FOOTER FIXO
+   ========================= */
 .video-footer {
   position: fixed;
   bottom: 0; left: 0;
@@ -308,7 +340,6 @@
   padding: 0.5rem 0;
   z-index: 1000;
 }
-
 .video-footer .footer-item {
   flex: 1;
   display: flex;
@@ -318,13 +349,207 @@
   font-size: 0.75rem;
   cursor: pointer;
 }
-
 .video-footer .footer-item svg {
   margin-bottom: 0.2rem;
   font-size: 1.4rem;
 }
-
 .video-footer .footer-item.active,
-.video-footer .footer-item:hover {
-  color: var(--accent);
+.video-footer .footer-item:hover { color: var(--accent); }
+
+/* =========================
+   NOTAS (Anotacoes.jsx) — responsivo
+   ========================= */
+.notes-container { padding-top: 0; }
+
+.notes-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
 }
+
+.notes-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+  flex-wrap: wrap;
+}
+
+.notes-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.notes-search {
+  background: #1f1f1f;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+  min-width: 180px;
+}
+
+.notes-btn, .notes-primary {
+  min-height: 40px;            /* alvo de toque >= 40px */
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: #1f1f1f;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notes-btn.danger { background: #2b0000; border-color: #551111; }
+.notes-primary { background: #d98e2d; border: none; color: #000; font-weight: 700; }
+
+.notes-editor {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  margin: 6px 0 16px;
+}
+
+.notes-textarea {
+  background: #1f1f1f;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+  min-height: 90px;
+  resize: vertical;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+.notes-editor-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;         /* respiro acima do footer fixo */
+}
+
+.notes-empty { opacity: .8; }
+
+.notes-card {
+  background: #1e1e1e;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.notes-card.pinned { border-color: #d98e2d; }
+
+.notes-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.notes-date { color: rgba(255,255,255,.6); }
+
+.notes-pin-badge {
+  font-size: 12px;
+  color: #d98e2d;
+  background: #2a1e0c;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.notes-icon-row { margin-left: auto; display: flex; gap: 10px; }
+
+.notes-icon-btn {
+  width: 40px; height: 40px;
+  background: none;
+  border: 1px solid #333;
+  border-radius: 10px;
+  color: #bbb;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.notes-text { white-space: pre-wrap; font-size: 14px; color: rgba(255,255,255,.9); }
+
+/* =========================
+   PROGRESSO (Aulas.jsx – classes vl-*)
+   ========================= */
+.vl-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 0;
+}
+.vl-btn-back {
+  background: none;
+  border: none;
+  color: var(--text);
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.vl-course-info { display: flex; flex-direction: column; gap: 6px; }
+.vl-course-title {
+  margin: 0; font-size: 1.05rem; font-weight: 700; line-height: 1.15;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.vl-course-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.1;
+  color: var(--subtext);
+  text-align: center;
+}
+.vl-progress-row { display: flex; align-items: center; gap: 10px; }
+.vl-progress-bar {
+  width: 200px; height: 6px; background: #fff; border-radius: 999px; overflow: hidden;
+}
+.vl-progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width .35s ease; }
+.vl-progress-text { font-size: .8rem; color: var(--text); min-width: 42px; text-align: right; }
+
+/* Tablets */
+@media (max-width: 900px) {
+  .notes-toolbar { gap: 10px; }
+  .notes-actions { gap: 6px; }
+  .notes-search { min-width: 160px; }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .header-body { padding: 0 48px; } /* um pouco menos em telas pequenas */
+  .notes-toolbar { flex-direction: column; align-items: stretch; }
+  .notes-actions { width: 100%; justify-content: space-between; gap: 6px; }
+  .notes-actions .notes-btn,
+  .notes-actions .notes-search { flex: 1 1 auto; }
+  .notes-editor { grid-template-columns: 1fr; }   /* textarea em cima, botões abaixo */
+  .notes-editor-actions { flex-direction: row; justify-content: flex-end; }
+  .notes-icon-row { gap: 6px; }
+  .notes-icon-btn { width: 44px; height: 44px; }  /* alvo de toque maior */
+}
+/* Em Aulas (vl-container), nunca mostrar a barra de progresso abaixo do player */
+.vl-container .video-progress-row {
+  display: none !important;
+}
+.video-footer .footer-item.disabled {
+  opacity: .5;
+  pointer-events: none;
+}
+

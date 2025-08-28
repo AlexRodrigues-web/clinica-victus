@@ -1,0 +1,535 @@
+/* VideoLessons.css */
+:root {
+  --bg: #000;
+  --card: #1e1e1e;
+  --card-hover: #2a2a2a;
+  --text: #fff;
+  --subtext: rgba(255,255,255,0.7);
+  --accent: #d98e2d;
+  --radius: 12px;
+  --transition: 0.2s ease;
+  --lock-color: rgba(255,255,255,0.6);
+}
+
+.vl-container {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui,-apple-system, sans-serif;
+  padding: 12px 16px 80px;
+}
+
+/* Header (curso + progresso) */
+.vl-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;   /* centraliza o título */
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.vl-btn-back {
+  position: absolute;        /* não ocupa espaço no fluxo */
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 1.2rem;
+}
+
+.vl-course-info {
+  flex: 0 1 auto;            /* evita “puxar” pros lados */
+  display: flex;
+  flex-direction: column;
+  align-items: center;        /* centraliza título + barra */
+  min-width: 0;
+}
+
+.vl-course-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: center;         /* garante centralização */
+}
+
+.vl-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;    /* barra centralizada */
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.vl-progress-bar {
+  width: 170px;               /* largura parecida com o mock */
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.vl-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width var(--transition);
+}
+
+.vl-progress-text {
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+/* Player preview */
+.vl-player {
+  position: relative;
+  margin-top: 16px;  /* antes: 10px */
+  border-radius: 12px;
+  overflow: hidden;
+  background: #111;
+}
+
+
+.vl-thumb {
+  width: 100%;
+  display: block;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+}
+
+.vl-btn-play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  background: rgba(0,0,0,0.6);
+  border: none;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Aula atual */
+.vl-lesson-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 14px;
+  gap: 12px;
+}
+
+.vl-lesson-text-container {
+  flex: 1;
+}
+
+.vl-lesson-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.vl-description {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--subtext);
+}
+
+.vl-lesson-icons {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.vl-icon-btn {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  font-size: 1.1rem;
+  position: relative;
+}
+
+.vl-icon-btn.completed.active svg {
+  color: var(--accent);
+}
+
+/* Próxima aula pill */
+.vl-btn-next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1f1f1f;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 999px;
+  margin-top: 10px;
+  width: 100%;
+  cursor: pointer;
+  gap: 12px;
+  transition: background var(--transition);
+}
+
+.vl-btn-next:hover {
+  background: #2a2a2a;
+}
+
+.vl-next-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  text-align: left;
+}
+
+.vl-next-label {
+  font-size: 0.65rem;
+  color: var(--subtext);
+  text-transform: none;
+}
+
+.vl-next-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Módulos / acordeão */
+.vl-module-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vl-module {
+  width: 100%;
+}
+
+.vl-module-header {
+  width: 100%;
+  background: var(--card);
+  padding: 12px 16px;
+  border: none;
+  border-radius: var(--radius);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+  cursor: pointer;
+  position: relative;
+}
+
+.vl-module-header .vl-arrow {
+  font-size: 14px;
+}
+
+.vl-module-header:hover {
+  background: var(--card-hover);
+}
+
+.vl-module-body {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Aula dentro do módulo */
+.vl-lesson-item {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.95rem;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.vl-lesson-item:hover {
+  background: var(--card-hover);
+}
+
+.vl-lesson-item.vl-current {
+  background: var(--accent);
+  color: #000;
+}
+
+.vl-lesson-item.vl-locked {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Status icon (círculo) */
+.vl-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+.vl-status-icon.incomplete {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+.vl-status-icon.completed {
+  background: var(--accent);
+  color: #000;
+}
+
+.vl-status-icon.locked {
+  background: rgba(255,255,255,0.02);
+  color: var(--subtext);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.vl-lesson-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* ===== Notas (Anotacoes.jsx) — responsivo ===== */
+.notes-container { padding-top: 0; }
+
+.notes-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.notes-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+  flex-wrap: wrap;
+}
+
+.notes-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.notes-search {
+  background: #1f1f1f;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+  min-width: 180px;
+}
+
+.notes-btn, .notes-primary {
+  min-height: 40px;                /* alvo de toque >= 40px */
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: #1f1f1f;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notes-btn.danger {
+  background: #2b0000;
+  border-color: #551111;
+}
+
+.notes-primary {
+  background: #d98e2d;
+  border: none;
+  color: #000;
+  font-weight: 700;
+}
+
+.notes-editor {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  margin: 6px 0 16px;
+}
+
+.notes-textarea {
+  width: 100%;
+  background: #1f1f1f;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+  min-height: 90px;
+  resize: vertical;
+}
+
+.notes-editor-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;             /* respiro acima do footer fixo */
+}
+
+.notes-empty { opacity: .8; }
+
+.notes-card {
+  background: #1e1e1e;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.notes-card.pinned {
+  border-color: #d98e2d;
+}
+
+.notes-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.notes-date { color: rgba(255,255,255,.6); }
+
+.notes-pin-badge {
+  font-size: 12px;
+  color: #d98e2d;
+  background: #2a1e0c;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.notes-icon-row {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.notes-icon-btn {
+  width: 40px; height: 40px;       /* alvo de toque */
+  background: none;
+  border: 1px solid #333;
+  border-radius: 10px;
+  color: #bbb;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.notes-text {
+  white-space: pre-wrap;
+  font-size: 14px;
+  color: rgba(255,255,255,.9);
+}
+
+/* Tablets */
+@media (max-width: 900px) {
+  .notes-toolbar { gap: 10px; }
+  .notes-actions { gap: 6px; }
+  .notes-search { min-width: 160px; }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .notes-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .notes-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .notes-actions .notes-btn,
+  .notes-actions .notes-search {
+    flex: 1 1 auto;
+  }
+  .notes-editor {
+    grid-template-columns: 1fr;    /* textarea em cima, botões abaixo */
+  }
+  .notes-editor-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  .notes-icon-row { gap: 6px; }
+  .notes-icon-btn { width: 44px; height: 44px; } /* ainda melhor pra dedo */
+}
+/* ===== FIX: estados dos ícones (VideoLessons) ===== */
+
+/* Garante que este componente use o accent dourado, mesmo se Video.css definir outro */
+.vl-container { --accent: #d98e2d; }
+
+.vl-lesson-icons .vl-icon-btn {
+  opacity: .85;
+  transition: transform var(--transition), opacity var(--transition), color var(--transition);
+}
+
+.vl-lesson-icons .vl-icon-btn:hover {
+  opacity: 1;
+  transform: scale(1.06);
+}
+
+.vl-lesson-icons .vl-icon-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Quando favorito/curtida estiverem ATIVOS */
+.vl-lesson-icons .vl-icon-btn.active svg {
+  color: var(--accent);
+  opacity: 1;
+}
+
+/* Inativos (apenas não “completed”) ficam mais discretos */
+.vl-lesson-icons .vl-icon-btn:not(.active):not(.completed) svg {
+  opacity: .6;
+}
+
+/* Concluído ativo já tinha regra, reforçamos um leve fundo */
+.vl-lesson-icons .vl-icon-btn.completed.active {
+  background: rgba(217,142,45,0.15);
+  border-radius: 999px;
+}

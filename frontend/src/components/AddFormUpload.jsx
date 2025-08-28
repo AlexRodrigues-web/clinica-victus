@@ -4,7 +4,6 @@ export default function AddFormUpload() {
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [arquivo, setArquivo] = useState(null);
-  const [tipo, setTipo] = useState('video');
   const [carregando, setCarregando] = useState(false);
   const inputFileRef = useRef(null);
 
@@ -12,14 +11,19 @@ export default function AddFormUpload() {
     e.preventDefault();
 
     if (!arquivo) {
-      alert('Selecione um arquivo para enviar.');
+      alert('Selecione um vídeo para enviar.');
+      return;
+    }
+
+    if (!arquivo.type.startsWith('video/')) {
+      alert('Envie apenas arquivos de vídeo.');
       return;
     }
 
     const formData = new FormData();
     formData.append('titulo', titulo);
     formData.append('descricao', descricao);
-    formData.append('tipo', tipo);
+    formData.append('tipo', 'video'); // fixo: apenas vídeo
     formData.append('arquivo', arquivo);
 
     setCarregando(true);
@@ -33,14 +37,13 @@ export default function AddFormUpload() {
       const json = await resposta.json();
 
       if (json.sucesso) {
-        alert('✅ Arquivo enviado com sucesso!');
+        alert('✅ Vídeo enviado com sucesso!');
         setTitulo('');
         setDescricao('');
-        setTipo('video');
         setArquivo(null);
         if (inputFileRef.current) inputFileRef.current.value = '';
       } else {
-        alert('❌ ' + (json.erro || 'Erro ao enviar arquivo.'));
+        alert('❌ ' + (json.erro || 'Erro ao enviar vídeo.'));
       }
     } catch (erro) {
       console.error('Erro ao enviar:', erro);
@@ -52,7 +55,7 @@ export default function AddFormUpload() {
 
   return (
     <form onSubmit={handleSubmit} className="upload-form" encType="multipart/form-data">
-      <h2 className="upload-title">📤 Upload de Conteúdo</h2>
+      <h2 className="upload-title">📤 Upload de Vídeo</h2>
 
       <input
         type="text"
@@ -70,14 +73,10 @@ export default function AddFormUpload() {
         className="upload-textarea"
       />
 
-      <select value={tipo} onChange={e => setTipo(e.target.value)} className="upload-select">
-        <option value="video">🎥 Vídeo</option>
-        <option value="pdf">📄 PDF</option>
-      </select>
-
+      {/* apenas vídeo */}
       <input
         type="file"
-        accept="video/mp4,video/webm,video/quicktime,application/pdf"
+        accept="video/*"
         onChange={e => setArquivo(e.target.files[0])}
         ref={inputFileRef}
         required
@@ -85,7 +84,7 @@ export default function AddFormUpload() {
       />
 
       {arquivo && (
-        <p className="upload-filename">📎 Arquivo: <strong>{arquivo.name}</strong></p>
+        <p className="upload-filename">📎 Vídeo: <strong>{arquivo.name}</strong></p>
       )}
 
       <button type="submit" className="upload-button" disabled={carregando}>

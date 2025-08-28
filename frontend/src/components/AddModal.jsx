@@ -1,13 +1,13 @@
 // frontend/src/components/AddModal.jsx
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { FaPlayCircle, FaFilePdf } from 'react-icons/fa';
+import { FaPlayCircle, FaUpload } from 'react-icons/fa';
 import AddFormLink from './AddFormLink';
 import AddFormUpload from './AddFormUpload';
 import './AddModal.css';
 
 export default function AddModal({ isOpen, onClose }) {
-  const [modo, setModo] = useState(null); // 'link' ou 'upload'
+  const [modo, setModo] = useState(null); // 'link' ou 'upload' — ambos apenas para VÍDEO
 
   if (!isOpen) return null;
 
@@ -22,7 +22,7 @@ export default function AddModal({ isOpen, onClose }) {
         className="add-modal-content"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="add-modal-title">Adicionar Conteúdo</h2>
+        <h2 className="add-modal-title">Adicionar Vídeo</h2>
 
         {!modo && (
           <div className="add-modal-options">
@@ -40,8 +40,8 @@ export default function AddModal({ isOpen, onClose }) {
               className="add-modal-btn"
               onClick={() => setModo('upload')}
             >
-              <FaFilePdf size={20} className="add-modal-icon" />
-              <span>Enviar Arquivo</span>
+              <FaUpload size={20} className="add-modal-icon" />
+              <span>Enviar Vídeo</span>
             </button>
           </div>
         )}

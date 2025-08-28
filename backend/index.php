@@ -2,12 +2,37 @@
 // backend/index.php
 
 /* =========================
- * CORS (dev-friendly)
+ * CORS (dev-friendly, multi-port)
  * ========================= */
-$origin = $_SERVER['HTTP_ORIGIN'] ?? 'http://localhost:3000';
-header("Access-Control-Allow-Origin: {$origin}");
+$allowed_origins = [
+    'http://localhost',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+];
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+/* fallback: se o navegador não enviar ORIGIN (alguns GET), tenta REFERER */
+if (!$origin && !empty($_SERVER['HTTP_REFERER'])) {
+    $ref = parse_url($_SERVER['HTTP_REFERER']);
+    if (!empty($ref['scheme']) && !empty($ref['host'])) {
+        $origin = $ref['scheme'].'://'.$ref['host'].(isset($ref['port']) ? ':'.$ref['port'] : '');
+    }
+}
+
+if ($origin && in_array($origin, $allowed_origins, true)) {
+    header("Access-Control-Allow-Origin: {$origin}");
+    header("Access-Control-Allow-Credentials: true");
+} else {
+    // fallback seguro para navegação direta (sem Origin)
+    header("Access-Control-Allow-Origin: http://localhost");
+    header("Access-Control-Allow-Credentials: true");
+}
+
 header("Vary: Origin");
-header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization");
 header("Content-Type: application/json; charset=utf-8");
@@ -164,8 +189,6 @@ switch ($resource) {
 
     /* -------------------------
      * PERFIL
-     * 1) Se existir routes/perfil.php (teu arquivo completo com validar_token), usa ele.
-     * 2) Senão, faz um fallback real com tokens_auth (sem usuário fake).
      * ------------------------- */
     case 'perfil': {
         // (1) Encaminha para a rota dedicada, se existir
@@ -363,7 +386,7 @@ switch ($resource) {
         if (count($parametros) >= 2 && strtolower($parametros[0]) === 'listar') {
             if ($ok && $temClasse) {
                 try { (new NotificacoesController())->listar((int)$parametros[1]); exit; }
-                catch (Throwable $e) { error_log("fallback /notificacoes/listar: ".$e->Message()); fb_notif_listar(); }
+                catch (Throwable $e) { error_log("fallback /notificacoes/listar: ".$e->getMessage()); fb_notif_listar(); }
             } else { fb_notif_listar(); }
         }
 
